@@ -1,0 +1,1334 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+
+
+# Data quality assessments
+
+Note, also eval = F to save computation time
+
+```{r, include = F}
+
+library(tidyverse)
+library(sf)
+library(feather)
+library(GGally)
+library(mapview)
+library(ggpmisc)
+library(lubridate)
+library(Metrics)
+library(kableExtra)
+library(broom)
+library(ggthemes)
+library(ggtern)
+library(tmap)
+
+knitr::opts_chunk$set(warning = F, message = F)
+```
+
+# Data read-and-munge
+
+
+
+```{r}
+
+
+simul <- read_feather('data/out/simul.feather') %>%
+  #rename(chl_a = chla) %>%
+  filter(if_all(c(chl_a,doc,secchi,tss), ~ . >= 0 )) %>%
+  dplyr::filter(if_all(c(chl_a,doc,secchi,tss), 
+                       ~!is.na(.) & . > quantile(.,0.001) & 
+                         . < quantile(.,0.999))) %>%
+  mutate(type = ifelse(grepl('Lake',type),'Lake',type))
+
+
+range <- c(234)
+
+
+max_secchi <- max(simul$secchi)
+#Couldn't think of a more clever way to multiply
+#chl_a by the range of values, so just made
+# dataframe 4 times bigger with new column called ratio. 
+nap_234 <- expand_grid(simul,chl_ratio = range) %>%
+  mutate(power = ifelse(chl_ratio == 234, 0.57, 1),
+         chl_a_biomass = exp(log(chl_ratio/1000)+log(chl_a)*power),
+         tss_dead = tss-chl_a_biomass,
+         chl_a = chl_a) %>%
+  filter(chl_ratio == 234) %>%
+  mutate(secchi = round(ifelse(secchi < .01,.01,secchi),2),
+         kd = round((1/(secchi)),5))
+
+
+
+no_sdd <- read_feather('data/out/no_secchi.feather') %>%
+  #rename(chl_a = chla) %>%
+  filter(chl_a <= max(simul$chl_a, na.rm  = T) &
+           chl_a >= min(simul$chl_a, na.rm = T),
+         tss <= max(simul$tss, na.rm  = T) &
+           tss >= min(simul$tss, na.rm = T),
+         doc <= max(simul$doc, na.rm  = T) &
+           doc >= min(simul$doc, na.rm = T),
+         secchi <= max(simul$secchi,na.rm =T) &
+           secchi >= min(simul$secchi, na.rm = T) |
+           is.na(secchi))%>%
+  mutate(type = ifelse(grepl('Lake',type),'Lake',type)) %>%
+  expand_grid(.,chl_ratio = range) %>%
+  mutate(power = ifelse(chl_ratio == 234, 0.57, 1),
+         chl_a_biomass = exp(log(chl_ratio/1000)+log(chl_a)*power),
+         tss_dead = tss-chl_a_biomass) %>%
+  filter(chl_ratio == 234) %>%
+  filter(tss_dead > 0.01)  
+```
+
+
+# Modelling development
+
+## Model Setup
+
+```{r}
+k_w <- 1/1.5/max_secchi
+
+
+kd_mod <- function(df){
+  mod <- lm((kd-k_w)  ~ 0 + (tss_dead + doc + chl_a), data = df)
+}
+
+
+kd_resid_extract <- function(df,mod){
+  df <- df %>%
+    mutate(residuals = mod$residuals,
+           pred = mod$fitted.values + k_w)
+}
+
+tidier <- function(mod){
+  
+  kd <- mod$model$`(kd - k_w)`+k_w
+  pred <- mod$fitted.values + k_w
+  
+  r2_real = cor(kd,pred)^2
+  tidied_mod <- tidy(mod) %>%
+    mutate(r2 = r2_real)
+}
+
+
+
+```
+
+## Modelling random subsets of data
+
+
+```{r}
+
+
+# Ten random iterations, a bit overkill for sure. 
+group_sizes <- rep(round(nrow(nap_234)/c(50,100,250,500,1000,2000,5000,10000, nrow(nap_234)),0),10)
+
+random_coef_holder <- list()
+
+## abandoned parallel version. 
+
+# plan(multisession, workers = 5) 
+# future_map(.x = group_sizes,
+#            .options = furrr_options(seed = 123),
+#            .f = ~ {
+#              nap_234$rgroup <- sample(1:.x,
+#                                       size = nrow(nap_234),
+#                                       replace = T)
+#              
+#                nap_234 %>%
+#                  mutate(group_size = .x) %>%
+#                  group_by(chl_ratio, rgroup) %>%
+#                  nest() %>%
+#                  mutate(
+#                    mods = map(data, kd_mod),
+#                    data = map2(data, mods, kd_resid_extract),
+#                    tidy_mod = map(mods, tidier)
+#                  ) %>%
+#                  select(-mods, -data) %>%
+#                  unnest(tidy_mod) %>%
+#                  mutate(group_size = .x,
+#                         each_group = round(nrow(nap_234) / group_size),0)
+#            })
+
+for(i in 1:length(group_sizes)){
+  nap_234$rgroup <- sample(1:group_sizes[i], 
+                           size = nrow(nap_234), 
+                           replace = T)
+  
+  random_coef_holder[[i]] <- nap_234 %>%
+    mutate(group_size = group_sizes[i]) %>%
+    group_by(chl_ratio, rgroup) %>%
+    nest() %>%
+    mutate(mods = map(data,kd_mod),
+           data = map2(data, mods, kd_resid_extract),
+           tidy_mod = map(mods, tidier)) %>%
+    select(-mods, -data) %>%
+    unnest(tidy_mod) %>%
+    mutate(group_size = group_sizes[i],
+           each_group = round(nrow(nap_234)/group_size),0)
+}
+
+all_random_mods <- do.call('rbind',random_coef_holder) 
+
+
+cv_estimate <- all_random_mods %>%
+  group_by(each_group,term, group_size) %>%
+  summarize(cv = sd(estimate)/mean(estimate)) %>%
+  pivot_wider(names_from = term,
+              values_from = cv)
+
+
+
+ggplot(all_random_mods,
+       aes(y = estimate, x = as.factor(each_group))) + 
+  geom_boxplot() + 
+  facet_wrap(~term) + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) 
+
+
+
+```
+
+
+
+
+
+
+## Modelling over different ecoregions and water types
+
+- Ecoregion Level 2
+- Type
+
+### Ecoregion prep
+
+```{r, eval = F}
+download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l2.zip',
+              destfile = 'data/in/eco2.zip')
+
+download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/us/us_eco_l3.zip',
+              destfile = 'data/in/eco3.zip')
+
+download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/us/us_eco_l4.zip',
+              destfile = 'data/in/eco4.zip')
+
+unzip('data/in/eco1.zip',exdir = 'data/in/eco1')
+
+unzip('data/in/eco2.zip',exdir = 'data/in/eco2')
+
+unzip('data/in/eco3.zip',exdir = 'data/in/eco3')
+
+unzip('data/in/eco4.zip', exdir = 'data/in/eco4')
+
+
+```
+
+
+### Eco Joinery
+
+```{r}
+eco2 <- st_read('data/in/eco2/NA_CEC_Eco_Level2.shp') %>%
+  select(code = NA_L2CODE,
+         name = NA_L2NAME) %>%
+  filter(name != 'WATER')
+
+
+eco3 <- st_read('data/in/eco3/us_eco_l3.shp') %>%
+  select(l3code = NA_L3CODE,
+         l3name = NA_L3NAME,
+         code = NA_L2CODE,
+         name = NA_L2NAME) %>%
+  filter(name != 'WATER')
+
+eco4 <- st_read('data/in/eco4/us_eco_l4_no_st.shp')  %>%
+  select(l3code = NA_L3CODE,
+         l3name = NA_L3NAME,
+         code = NA_L2CODE,
+         name = NA_L2NAME,
+         l4code = US_L4CODE,
+         l4name = US_L4NAME)
+
+
+
+
+eco_joinery <- function(df = nap_234,
+                        eco_reg = eco2,
+                        code = code){
+  
+  
+  nap_site_pass <- df %>%
+    distinct(SiteID, lat, long) %>%
+    st_as_sf(., coords = c('long','lat'), crs = 4326) %>%
+    st_transform((st_crs(eco_reg))) %>%
+    st_join(eco_reg)
+  
+  nap_nas <- nap_site_pass %>%
+    filter(is.na({{code}})) %>%
+    select(SiteID) %>%
+    st_join(eco_reg, join = st_nearest_feature) 
+  
+  nap_sites <- nap_site_pass %>%
+    filter(!is.na({{code}})) %>%
+    rbind(nap_nas)
+  
+  
+  return_df <- inner_join(nap_sites,df) %>%
+    st_drop_geometry()
+  
+}
+
+
+zone_min <- 150
+
+
+nap_234_eco4_all <- eco_joinery(df = nap_234,
+                            eco_reg = eco4,
+                            code = l4code) %>%
+  group_by(l4name,l4code) %>%
+  add_count(name = 'l4count') 
+
+no_sdd_4 <- eco_joinery(df = no_sdd,
+                            eco_reg = eco4,
+                            code = l4code) %>%
+  group_by(l4name,l4code) %>%
+  add_count(name = 'l4count') 
+
+
+no_sdd_4_3 <-  no_sdd_4 %>%
+  mutate(zone = 3) %>%
+  group_by(l3code,l3name) %>%
+  add_count(name = 'l3count') %>%
+  ungroup() %>%
+  filter(l3count > zone_min) %>%
+  select(names(no_sdd), code = l3code, name = l3name) 
+
+
+
+
+nap_234_eco4_eco3 <- nap_234_eco4_all %>%
+  mutate(zone = 3) %>%
+  group_by(l3code,l3name) %>%
+  add_count(name = 'l3count') %>%
+  ungroup() %>%
+  filter(l3count > zone_min) %>%
+  select(names(nap_234), code = l3code, name = l3name) 
+
+nap_234_eco4 <- nap_234_eco4_all %>%
+    filter(l4count > zone_min) %>%
+  mutate(zone = 4) %>%
+  select(names(nap_234),code = l4code, name = l4name) 
+
+
+
+
+no_4zone <- nap_234 %>%
+  anti_join(nap_234_eco4)
+
+
+nap_234_eco3 <- eco_joinery(df = no_4zone,
+                            eco_reg = eco3,
+                            code = l3code) %>%
+  group_by(l3code,l3name) %>%
+  add_count(name = 'l3count') %>%
+  filter(l3count > zone_min) %>%
+  mutate(zone = 3) %>%
+  select(names(nap_234),code = l3code, name = l3name)
+
+
+no_3zone <- no_4zone %>%
+  anti_join(nap_234_eco3)
+
+
+nap_234_eco2 <- eco_joinery(df = no_3zone,
+                            eco_reg = eco2,
+                            code = code) %>%
+  mutate(zone = 2) %>%
+  select(names(nap_234),code = code, name = name)
+
+
+
+zoned_4 <- bind_rows(nap_234_eco2,nap_234_eco3,nap_234_eco4) %>%
+  group_by(name,code) %>%
+  add_count() %>%
+  filter(n > zone_min)
+
+zoned_3 <- bind_rows(nap_234_eco2, nap_234_eco3, nap_234_eco4_eco3) %>%
+  group_by(name,code) %>%
+  add_count() %>%
+  filter(n > zone_min)
+
+
+zoned_2 <-  eco_joinery(df = nap_234,
+                            eco_reg = eco2,
+                            code = code) %>%
+  group_by(name,code) %>%
+  add_count() %>%
+  filter(n > zone_min) %>%
+  select(names(nap_234), code = code, name = name) 
+
+```
+
+
+
+### Maps
+
+
+```{r, eval = T}
+
+simple_3 <- eco3
+
+zoned_3_site_counts <- zoned_3 %>%
+  group_by(code,name) %>%
+  count()
+
+
+
+simple_3_3_join<- simple_3 %>% 
+  filter(l3code %in% zoned_3_site_counts$code) %>%
+  group_by(code = l3code,name = l3name) %>%
+  summarize() %>%
+  inner_join(zoned_3_site_counts)
+
+## DO ABOVE WITH Z2
+
+simple_3_2_join<- simple_3 %>% 
+  filter(code %in% zoned_3_site_counts$code) %>%
+  group_by(code,name) %>%
+  summarize() %>%
+  inner_join(zoned_3_site_counts) %>%
+  st_difference(.,
+                st_union(simple_3_3_join))
+
+
+
+modelable_z3 <- bind_rows(simple_3_3_join,
+                          simple_3_2_join) 
+
+
+mapview(modelable_z3, zcol = 'n')
+
+no_sdd_modelable <- no_sdd %>%
+  distinct(SiteID, lat, long) %>%
+  st_as_sf(., coords = c('long','lat'), crs = 4326) %>%
+  st_transform((st_crs(modelable_z3))) %>%
+  st_join(modelable_z3)
+
+
+
+
+no_sdd_na <- no_sdd_modelable %>%
+    filter(is.na(code)) %>%
+    select(SiteID) 
+
+
+# SLOW!
+dist_50 <- nngeo::st_nn(no_sdd_na, modelable_z3, k = 1, returnDist = TRUE)
+
+
+no_sdd_100 <- no_sdd_na %>%
+  mutate(mindex = unlist(dist_50$nn),
+                dist = unlist(dist_50$dist)) %>%
+  filter(dist <= 100)
+
+
+no_sdd_final <- bind_rows(no_sdd_modelable %>%
+                            filter(!is.na(code)),
+                              st_join(no_sdd_100,modelable_z3, 
+                                      st_nearest_feature)) %>%
+  filter(!is.na(code)) %>%
+  group_by(SiteID) %>%
+  add_count(name = 'codenames') 
+
+
+
+
+no_sdd_z3 <- inner_join(no_sdd, no_sdd_final)
+
+
+```
+
+
+
+
+# Model Application
+
+## Global Model
+
+```{r}
+## Global model
+
+
+
+
+nap_mods <- group_by(nap_234,chl_ratio) %>%
+  nest() %>%
+  mutate(mods = map(data,kd_mod),
+         data = map2(data, mods, kd_resid_extract))
+
+mod234 <- nap_mods %>%
+  dplyr::filter(chl_ratio == 234)
+
+mod <- mod234$mods[[1]]
+
+
+with_sech <- nap_234 %>%
+  mutate(kd_pred = predict(mod,.),
+         kd_pred = kd_pred + k_w)
+
+r2 = cor(with_sech$kd,with_sech$kd_pred)^2
+
+
+
+sech_val <- ggplot(with_sech,aes(x = kd, y = kd_pred, color = type)) + 
+  geom_point(shape = 1) + 
+  scale_x_log10() + 
+  scale_y_log10() + 
+  theme_few() +
+  scale_color_few() + 
+  xlab('Actual kd from Secchi') + 
+  ylab('Predicted kd') +
+  ggtitle('Modeled Light Extinction R2 = 0.34') + 
+  geom_abline(slope = 1) 
+
+
+
+ggsave(plot = sech_val,
+       filename = 'figs_2023/sech_val_old.png',
+       dpi=300,
+       height = 6,
+       width = 6)
+
+```
+
+
+
+## Granular models
+
+- No P value filtering
+- Applying mods with logic that ecoregion can modify both intercept and slope
+- Applying single models (e.g. lm(kd~(tss+secchi+chla)*type))
+
+### Type mods
+
+
+```{r}
+#Single type mod
+
+type_mod <- lm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):type, data = nap_234)
+
+
+pred_mutation <- function(df = nap_234, smod = type_mod) {
+  df %>%
+  mutate(kd_pred = predict(smod, .) + k_w)
+         # tss_kd = ((smod$coefficients[1])*tss_dead)/kd_pred,
+         # doc_kd = ((smod$coefficients[2])*doc)/kd_pred,
+         # chl_kd = ((smod$coefficients[3])*chl_a)/kd_pred,
+         # test_1 = tss_kd + doc_kd + chl_kd) 
+}
+
+tidy_type <- tidier(type_mod)
+
+tidy_type
+```
+
+#### Nested Type mods (old)
+
+```{r}
+# nested_type_mods
+nap_type_mods <- nap_234 %>%
+  group_by(type) %>%
+  add_count() %>%
+  group_by(type,n) %>%
+  nest() %>%
+  mutate(mods = map(data,kd_mod),
+         tidy_mod = map(mods, tidier))
+
+nap_type_tidy <- nap_type_mods %>%
+  select(-mods,-data)  %>%
+  unnest(tidy_mod)
+```
+
+
+### Eco Mods
+
+
+### Single Eco 3 mod
+
+- 
+
+```{r}
+
+eco2_type_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code:type, data = zoned_2) 
+
+eco2_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code, data = zoned_2) 
+
+
+eco3_type_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code:type, data = zoned_2) 
+
+
+eco3_type_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code:type, data = zoned_3) 
+
+eco3_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code, data = zoned_3 %>%
+                  filter(n > zone_min)) 
+
+eco4_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code, data = zoned_4) 
+
+eco4_type_glm <- glm((kd-k_w) ~ 0 + (tss_dead + doc + chl_a):code:type,
+                data = zoned_4)
+
+BIC(eco2_glm)
+BIC(eco2_type_glm)
+BIC(eco3_glm)
+BIC(eco4_glm)
+BIC(eco3_type_glm)
+BIC(eco4_type_glm)
+
+summary_mods <- list(eco2_glm, eco2_type_glm, eco3_glm, eco3_type_glm,
+             eco4_glm, eco4_type_glm)
+
+
+## TO DO!
+
+## Look at spatial of variation in estimates
+
+## Apply estimates to NO_SDD Data
+
+## Clean up modelling and spatial joining pipeline. 
+tidy_eco3 <- tidier(eco3_glm) 
+
+
+
+
+ggplot(tidy_eco3 %>%
+         filter(grepl('doc',term)), aes(x = estimate) ) +
+  geom_histogram() 
+
+
+fit_comparer = function(mod = eco2_glm){
+  
+  kd <- mod$model$`(kd - k_w)`+k_w
+  pred <- mod$fitted.values + k_w
+  
+  r2_real = cor(kd,pred)^2
+  bic = BIC(mod)
+  aic = AIC(mod)
+  
+  tibble(r2 = r2_real,
+         bic = bic,
+         aic = aic)
+}
+
+tidier_mods <- map_dfr(summary_mods, fit_comparer) 
+
+tidy_4_type <- tidier(eco3_glm) %>%
+  filter(!is.na(estimate))
+
+tidier_mods
+
+```
+
+
+# Model application zone
+
+```{r}
+#applying mods to no_sdd_z3. 
+?str_split_1
+
+#Step one split out model coefs by eco region and parameter
+
+coef_splitter <- function(df = tidy_eco3) {
+  df %>%
+    separate_wider_delim(term, delim = ":code", names = c("parameter", "code")) %>%
+    select(code,parameter,estimate) %>%
+    pivot_wider(id_cols = code,names_from = parameter,
+                names_prefix = 'est_',
+                values_from = estimate)
+}
+
+
+final_coefs <- no_sdd_z3 %>%
+  mutate(kd = round((1/(secchi)),5),
+        kd_pred = predict(eco3_glm,.) + k_w) %>%
+  inner_join(., coef_splitter(tidy_eco3)) %>%
+  mutate(tss_kd = (est_tss_dead*tss_dead)/kd_pred,
+         doc_kd = (est_doc*doc)/kd_pred,
+         chl_kd = (est_chl_a*chl_a)/kd_pred,
+         test_1 = tss_kd + doc_kd + chl_kd) %>%
+  select(-n,-mindex, -dist) %>%
+  mutate(month = month(date_unity),
+         year = year(date_unity))
+
+
+
+```
+
+
+### Various summaries
+
+
+```{r}
+
+
+
+final_monthly_means <- final_coefs %>% 
+  group_by(SiteID, lat, long, type, code, name, month) %>%
+  select(tss_dead, tss, doc, chl_a,kd, kd_pred, tss_kd, doc_kd, chl_kd) %>%
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm=T)),
+            n = n())
+  
+
+final_yearly_means <- final_coefs %>%
+  group_by(SiteID, lat, long, type, code, name, year) %>%
+  add_count() %>%
+  select(tss_dead, tss, doc, chl_a,kd, kd_pred, tss_kd, doc_kd, chl_kd) %>%
+  summarise(across(where(is.numeric), \(x) mean(x, na.rm=T)),
+            n = n())
+
+write_csv(final_coefs, file = 'data/final/final_coefs.csv')
+write_csv(final_monthly_means, file = 'data/final/final_monthly.csv')
+write_csv(final_yearly_means, file = 'data/final/final_yearly.csv')
+
+```
+
+
+
+
+
+
+### Tern Test
+
+```{r}
+library(ggtern)
+
+
+ggtern(final_coefs, aes(chl_kd,doc_kd,tss_kd,color = type)) + 
+  geom_point(shape = 1, size = 0.5) +
+  scale_color_manual(values = c('tan3','blue4','gray60')) + 
+  theme_bw() + 
+  theme_showarrows()  +
+  labs(x = 'Algae', 
+       y = 'DOC',
+       z = 'TSS')  
+
+```
+
+
+
+
+
+### Performance 
+
+```{r}
+
+ggplot(final_coefs,aes(x = kd, y = kd_pred)) + 
+  geom_point() + 
+  scale_y_log10() + 
+  scale_x_log10()
+
+```
+
+
+### Coefficient extraction
+
+```{r}
+df = tidy_eco3
+
+
+
+```
+
+
+
+
+
+
+
+
+```{r}
+nap_eco_mods <- zoned %>%
+  group_by(name,code,n) %>%
+  nest() %>%
+  mutate(mods = map(data,kd_mod),
+         tidy_mod = map(mods, tidier))  %>%
+  select(-data)
+
+nap_eco_coefs <- nap_eco_mods %>%
+  select(-mods) %>%
+  unnest(tidy_mod) %>%
+  mutate(eco2 = abbreviate(name,4),
+         N = log10(n)) %>%
+  filter(n >= 20) %>%
+  mutate(label = paste0(eco2,' (',n,')'),
+         label = fct_reorder(label,n))
+
+
+global_mod <- tidier(mod)
+
+
+
+
+eco_estimates <- ggplot(nap_eco_coefs,aes(x = fct_reorder(label, n), y = estimate, size = N)) + 
+  geom_hline(data = nap_type_tidy,aes(yintercept = estimate),
+             linetype = 2) + 
+  geom_hline(data = global_mod, aes(yintercept = estimate), color = 'black') + 
+  geom_point(shape = 1) + 
+  facet_wrap(~term,ncol = 1) + 
+  scale_x_discrete(guide = guide_axis(n.dodge = 2)) + 
+  scale_size(range = c(0.5,5), breaks = c(1,2,3,4),
+             labels = c('10','100','1000','10,000')) + 
+  theme_few() + 
+  scale_color_few() + 
+  xlab('Ecoregion Level 2 or 3')
+
+
+eco_estimates
+
+ggsave(plot = eco_estimates,
+       filename = 'figs_2023/eco_type_estimates_fixed.png',
+       dpi=300,
+       height = 5,
+       width = 7)
+
+
+## Add envelope and organize by counts. 
+```
+
+
+# Methods Figure 1
+
+Envelope of random versus eco region
+
+## Cones
+
+
+```{r}
+random_99s <- all_random_mods %>%
+  group_by(group_size, term, each_group) %>%
+  summarize(q99 = quantile(estimate,.99999),
+            q01 = quantile(estimate, .00001),
+            max99 = max(estimate),
+            min99 = min(estimate))
+
+random_99s
+
+ggplot() +
+  geom_ribbon(data = random_99s, aes(x = each_group, ymin = min99, ymax=max99),
+              color = 'gray20') + 
+  geom_point(data = nap_eco_coefs,
+             aes(x = n, y = estimate, color = label)) + 
+  facet_wrap(~term, nrow = 1) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) + 
+  scale_x_log10(labels = scales::label_log(digits = 1)) + 
+  theme_few() + 
+  xlab('Group size') + 
+  ylab('kd estimate')
+
+
+
+```
+
+## Estimate Maps
+
+```{r}
+
+simple_4 <- st_simplify(eco4, dTolerance = 1000) %>%
+  st_transform(4326) 
+
+
+
+names(nap_eco_coefs)
+names(simple_4$l4code)
+
+
+s4 <- inner_join(simple_4,nap_eco_coefs, by = join_by(l4code == code), relationship = 'many-to-many')
+
+s3 <- inner_join(simple_4,nap_eco_coefs, by = join_by(l3code == code), relationship = 'many-to-many')
+
+s2 <- inner_join(simple_4,nap_eco_coefs, by = join_by(code == code), relationship = 'many-to-many')
+
+
+
+
+regions <- bind_rows(s2,s3) %>%
+  bind_rows(s4)
+
+regions %>%
+  filter(term == 'doc') %>%
+  mapview(., zcol = 'estimate')
+
+
+```
+
+
+
+
+#### Methods figure
+
+```{r}
+
+
+sd_mean <- function(x){
+  sd(x)/mean(x)
+}
+
+means <- nap_234_eco %>%
+  mutate(abrev = abbreviate(name, 5)) %>%
+  group_by(type, name, code,abrev) %>%
+  summarize((across(where(is.numeric), sd_mean))) %>%
+  select(name,abrev,chl_a,tss_dead,doc)
+
+
+
+
+```
+
+
+#### R2 
+
+
+```{r}
+
+nap_organized <- nap_eco_coefs %>%
+  select(code, name, n, term, estimate, r2) %>% 
+  right_join(global_mod %>%
+               select(global_r2 = r2,
+                      global_est = estimate,
+                      term),
+             by = c('term')) %>%
+  mutate(across(where(is.numeric), \(x) round(x, 2))) %>%
+  mutate(portion = n/nrow(zoned)) %>%
+  arrange(-r2) 
+  
+
+
+
+nap_organized %>%
+kable(.) %>%
+  kable_styling(.)
+
+
+
+```
+
+
+
+
+### Apply to no sech data. 
+
+```{r, include = F}
+
+
+
+
+d234 <- no_sdd %>%
+  mutate(kd_pred = predict(mod, .) + k_w,
+         tss_kd = ((mod$coefficients[1])*tss_dead)/kd_pred,
+         doc_kd = ((mod$coefficients[2])*doc)/kd_pred,
+         chl_kd = ((mod$coefficients[3])*chl_a)/kd_pred,
+         test_1 = tss_kd + doc_kd + chl_kd) 
+
+
+```
+
+# Results
+
+
+
+```{r}
+
+no_sech_tern_global_mod <- ggtern(d234 , 
+                                  aes(chl_kd,doc_kd,tss_kd,color = type)) + 
+  geom_point(shape = 1, size = 0.5) +
+  scale_color_manual(values = c('tan3','blue4','gray60')) + 
+  theme_bw() + 
+  theme_showarrows()  +
+  labs(x = 'Algae', 
+       y = 'DOC',
+       z = 'TSS')  
+
+no_sech_tern_global_mod
+
+
+```
+
+## Granula mod tern
+
+
+```{r}
+
+coanalyst <- function(df, local_mod){
+  df = df %>%
+    mutate(kd_pred = predict(local_mod, df) + k_w,
+           tss_kd = ((local_mod$coefficients[1])*tss_dead)/kd_pred,
+           doc_kd = ((local_mod$coefficients[2])*doc)/kd_pred,
+           chl_kd = ((local_mod$coefficients[3])*chl_a)/kd_pred,
+           test_1 = tss_kd + doc_kd + chl_kd) 
+}
+
+
+
+
+
+
+gran_mods <- no_sdd_eco %>%
+  group_by(code, name, type) %>%
+  nest() %>%
+  inner_join(nap_eco_mods) %>%
+  filter( n > 10) %>%
+  mutate(type_eco_preds = map2(data, mods, coanalyst)) %>%
+  select(code, name, type, type_eco_preds) %>%
+  unnest(type_eco_preds) %>%
+  arrange(date_unity)
+
+
+granula_tern <- ggtern(gran_mods , 
+                       aes(chl_kd,doc_kd,tss_kd,color = type)) + 
+  geom_point(shape = 1, size = 0.5) +
+  scale_color_manual(values = c('tan3','blue4','gray60')) + 
+  theme_bw() + 
+  theme_showarrows()  +
+  labs(x = 'Algae', 
+       y = 'DOC',
+       z = 'TSS')  
+
+granula_tern
+
+
+ggsave(plot = granula_tern,
+       filename = 'figs_2023/granular_models.png',
+       dpi=300,
+       height = 6,
+       width = 6)
+
+
+summary(gran_mods)
+
+
+gran_err <- gran_mods %>%
+  filter(!is.na(secchi)) %>%
+  mutate(kd = round((1/(secchi)),5)) %>%
+  filter(tss_kd > 0,
+         doc_kd > 0,
+         chl_kd > 0) %>%
+  filter(secchi <= max(nap_234$secchi),
+         secchi >= min(nap_234$secchi))
+
+r2_gran = cor(gran_err$kd, gran_err$kd_pred)^2
+
+gran_rmse = rmse(gran_err$kd, gran_err$kd_pred)
+
+gran_mape = mape(gran_err$kd, gran_err$kd_pred)
+
+```
+
+
+
+### Ternaries by type with Jim's Hex zones
+
+```{r}
+
+
+# 
+type_tern_sums <- d234 %>%
+  group_by(type) %>%
+  select(tss_kd,doc_kd,chl_kd,type) %>%
+  summarize(across(where(is.numeric), mean))
+
+
+
+
+tern_elip <- ggtern(d234,
+                    aes(chl_kd,doc_kd,tss_kd)) + 
+  geom_point(shape = 1, size = 0.1,
+             color = 'gray30') +
+  scale_color_manual(values = c('tan3','blue4','gray60')) + 
+  theme_bw() + 
+  theme_showarrows()  +
+  labs(x = 'Algae', 
+       y = 'DOC',
+       z = 'TSS')  + 
+  facet_wrap(~type,
+             ncol = 3) + 
+  geom_mean_ellipse() + 
+  #geom_hex_tern(bins = 50) + 
+  geom_point(data = type_tern_sums, color = 'white') 
+
+
+tern_elip
+
+ggsave(plot = tern_elip,
+       filename = 'figs_2023/tern_elip_new.png',
+       dpi=300,
+       height = 9,
+       width = 4)
+
+```
+
+
+
+
+To have results we need to find some interesting candidate sites to explore. These
+will be places that either 1) have lots of repeat data (temporal variation) or 2) 
+have lots of spatial data (spatial variation), or ideally both!
+
+
+## Temporal Variation
+
+
+### Sites with long-term records
+
+Long-term means:
+
+- At least 10 years of data with at least 3 observations in each year
+
+
+```{r}
+
+library(ggtern)
+
+
+long_terms <- d234 %>%
+  group_by(lat,long,SiteID) %>%
+  distinct(date,.keep_all = T) %>%
+  mutate(year = year(date)) %>%
+  mutate(n_years = n_distinct(year)) %>%
+  filter(n_years > 5) %>%
+  mutate(range = paste(min(year),max(year)))
+
+# ggtern(d234, aes(tss_kd,doc_kd,chl_kd,
+#                  size = secchi_pred)) + 
+#     geom_point(shape = 19) +
+#     scale_color_viridis_c() + 
+#     theme_bw() + 
+#     scale_size(range = c(0.1,3)) + 
+#     theme_showarrows() + 
+#     labs(x = 'TSS', 
+#          y = 'DOC',
+#          z = 'Algae') 
+
+year_plotter <- function(df = nested_long$data[[1]]){
+  ggtern(df, aes(tss_kd,doc_kd,chl_kd,color = year,
+                 size = secchi_pred)) + 
+    geom_point(shape = 19) +
+    scale_color_viridis_c() + 
+    theme_bw() + 
+    scale_size(range = c(0.5,2)) + 
+    theme_showarrows() + 
+    labs(x = 'TSS', 
+         y = 'DOC',
+         z = 'Algae') + 
+    ggtitle(paste(unique(df$id)))
+}
+
+nested_long <- long_terms %>%
+  group_by(lat,long,SiteID, year, type) %>%
+  mutate(n = n()) %>%
+  filter(n > 2) %>%
+  summarize(across(where(is.numeric), mean)) %>%
+  group_by(lat, long, SiteID, type) %>%
+  mutate(id = SiteID) %>%
+  nest() %>%
+  ungroup() %>%
+  mutate(mean_plots = map(data, year_plotter))
+
+
+site_sf <- long_terms %>%
+  distinct(lat,long,SiteID,range, n_years) %>% 
+  inner_join(nested_long) %>%
+  st_as_sf(.,coords = c('lon','lat'), crs = 4326) %>%
+  ungroup() 
+
+
+# mapviewOptions(fgb = F)
+# m1 <- mapview(site_sf,
+#               zcol = 'n_years',
+#               popup = leafpop::popupGraph(site_sf$mean_plots))
+# 
+# 
+# 
+# 
+# mapshot(m1, url = 'long_terms.html')
+```
+
+
+
+### Seasonal variation
+
+
+```{r}
+
+
+season_sites <- d234 %>%
+  filter(SiteID %in% site_sf$SiteID) %>%
+  mutate(year = year(date_unity),
+         month = month(date_unity)) %>%
+  group_by(lat,long,SiteID,type,year) %>%
+  summarize(dist_months = n_distinct(month)) %>%
+  filter(dist_months > 5)
+
+
+
+
+month_nest <- d234 %>%
+  filter(SiteID %in% season_sites$SiteID) %>%
+  mutate(year = year(date_unity),
+         month = month(date_unity)) %>%
+  group_by(SiteID, lat, long, month) %>%
+  summarize(across(where(is.numeric),mean)) %>%
+  group_by(SiteID, lat, lon) %>%
+  mutate(id = SiteID) %>%
+  nest()
+
+
+
+month_plotter <- function(df =  month_nest$data[[1]]){
+  ggtern(df, aes(tss_kd,doc_kd,chl_kd,color = month,
+                 size = secchi_pred)) + 
+    theme_bw() + 
+    theme_showarrows() + 
+    labs(x = 'TSS', 
+         y = 'DOC',
+         z = 'Alg') + 
+    geom_point() + 
+    scale_color_gradient2(low = 'green3',
+                          mid = 'gray20',
+                          high = 'purple3',
+                          midpoint = 6) + 
+    scale_size(range = c(0.5,3))
+}
+
+month_sf <- month_nest %>%
+  st_as_sf(.,coords = c('lon','lat'), crs = 4326) %>%
+  ungroup()  %>%
+  mutate(month_plots = map(data, month_plotter)) 
+
+# mapviewOptions(fgb = F)
+# month_map <- mapview(month_sf,
+#                      popup = leafpop::popupGraph(month_sf$month_plots))
+# 
+# mapshot(month_map, url = 'month_lon_terms.html')
+
+```
+
+
+## Type means
+
+
+```{r}
+month_site_means <- d234 %>%
+  mutate(month = month(date_unity),
+         year = year(date_unity),
+         season = cut(month,4)) %>%
+  group_by(lat, long, SiteID, season, type) %>%
+  summarize(across(where(is.numeric), mean))
+
+
+ggtern(month_site_means, aes(tss_kd,doc_kd,chl_kd,
+                             size = secchi_pred)) + 
+  theme_bw() + 
+  theme_showarrows() + 
+  labs(x = 'TSS', 
+       y = 'DOC',
+       z = 'Alg') + 
+  geom_point() + 
+  scale_color_gradient2(low = 'green3',
+                        mid = 'gray20',
+                        high = 'purple3',
+                        midpoint = 6) + 
+  scale_size(range = c(0.5,3)) + 
+  facet_grid(season ~ type)
+
+
+
+```
+
+
+
+# MC/JJ Questions
+
+- Exemplars for seasonal/long-term/temporal to show off ideas 
+
+- Here's everything mapped over where we have tss/chl_a/doc and clustered?
+
+- When making results drop secchi requirement and model secchi. 
+
+- Huc membership
+
+- Screening for long-term data at least 1/2 per year for > 20 years
+
+- intra-annual at least 5 months per year. 
+
+## Spatial Variation
+
+
+```{r}
+
+
+fox_ids <- tibble(SiteID = c('USGS-04084422','USGS-04084445','USGS-04084475','USGS-04085054',
+                             'USGS-04085059', 'USGS-04085139'),
+                  order = c(6,5,4,3,2,1))
+
+
+
+fox_r <- d234  %>%
+  inner_join(fox_ids) %>%
+  mutate(date = as.Date(date_unity)) 
+
+
+fox_r_map <- fox_r %>%
+  distinct(SiteID, .keep_all = T) %>%
+  st_as_sf(.,coords = c('lon','lat'),crs = 4326)
+
+mapview(fox_r_map)
+
+summary(fox_r)
+cool_dates <- fox_r %>%
+  group_by(date) %>%
+  count() %>%
+  arrange(-n) %>%
+  ungroup() %>%
+  slice(1:5) %>%
+  arrange(date)
+
+
+
+fox_days <- fox_r %>%
+  dplyr::filter(date %in% cool_dates$date) 
+
+
+
+
+ggtern(fox_days,aes(tss_kd,chl_kd,doc_kd, color = order)) + 
+  geom_point() + 
+  facet_wrap(~date,ncol=3) + 
+  theme_bw() + 
+  theme_showarrows() + 
+  labs(x = 'TSS', 
+       y = 'DOC',
+       z = 'Alg') + 
+  geom_point() + 
+  geom_line() +
+  scale_color_gradient(low = 'skyblue',high = 'blue3') + 
+  theme(legend.position = c(0.8,0.2))
+
+
+```
+
+
+### Additions
+
+- Geographic Coverage
+
+- Plausible space (not deep clarity and high chl-a)
+
+- Switch model application to wherever we have all data.
+
+- Requires a reasonable R2 to predict KD. Highly skewed in 
+the data
+
+- R2 round the corner. 
+
+
+
