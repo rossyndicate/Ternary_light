@@ -20,23 +20,23 @@ library(tidyverse)
 
 ```
 
-# Download and Join
+# Download and Merge Aquasat data
 
-I recognize that I should probably just use `targets` for this part, but... I
-(Matt Ross) don't know how to use targets yet! So, instead we are just going to
-have several code chunks here that just downloads all the data directly from
-figshare, preps data for analysis, etc... and the chunks will just be set to
-`eval = FALSE`, so they won't run unless you manually run it. That way this book
-can run in reasonable timeframes, most other chunks will run based on "caching."
-Though, some data intensive tasks, will also simply have `eval = F` to save
-runtime. These chunks will be flagged explicitly, and all their data products
-saved to a `data/out` folder.
+Note that some chunks have been set to `eval = FALSE`, so they won't run unless
+you manually run it. That way this book can run in reasonable timeframes on
+computers that don't have a lot of memory or a fast download speed, and some
+other chunks will run based on "caching." These chunks will be flagged
+explicitly, and all their data products saved to a `data/out` folder.
 
 ## AquaSat download
 
 AquaSat is held in a figshare collection with many pieces. For this work we will
 need most of the data held there, which we will access through direct download.
 The URLs are just from the AquaSat collection links.
+
+<details>
+
+<summary>Code to download data.</summary>
 
 ```{r download-data}
 # check to see if the data have been downloaded. we assume that if the directory exists, data have been downloaded.
@@ -76,11 +76,17 @@ if(!dir.exists(download_dir)) {
 
 ```
 
+</details>
+
 ## AquaSat Read and join.
 
 [[note here: 'data/in/clouds.feather' nor WRS2 shapefile
 'data/in/wrs/WRS2_descending.shp' are parts of the downloaded files, commented
 out for rendering purposes]]
+
+<details>
+
+<summary>Code to collate downloaded data.</summary>
 
 ```{r read-join-aquasat}
 
@@ -124,6 +130,8 @@ if(!dir.exists(data_out_dir)) {
 
 ```
 
+</details>
+
 ## Data Evalualtion and Subset
 
 ### Selecting only simultaneous observations
@@ -131,6 +139,10 @@ if(!dir.exists(data_out_dir)) {
 For the purposes of this analysis, we only care about observations that have
 complete simultaneous observations across the four parameters of interest:
 chlorophyll *a*, DOC, TSS, and Secchi disk depth.
+
+<details>
+
+<summary>Code to subset for simultaneous observations.</summary>
 
 ```{r simultaneous}
 if(!dir.exists(data_out_dir)) {
@@ -166,9 +178,15 @@ if(!dir.exists(data_out_dir)) {
 
 ```
 
+</details>
+
 ## Where are sites with simultaneous observations of clarity constituents?
 
-```{r map-simultaneous, fig.cap= "Map of all sites with simultaneous chlorohpyll *a*, DOC, TSS, and Secchi disk depth measurements within the Aquasat data set."}
+<details>
+
+<summary>Code to create map figure.</summary>
+
+```{r make-map-simultaneous}
 
 simul_vis <- read_csv(file.path(data_out_dir, 'simul.csv'))
 
@@ -177,18 +195,30 @@ unique_simul <- simul_vis %>%
   st_as_sf(.,coords = c('long','lat'), crs = 4326)
 
 mapviewOptions(fgb = FALSE) # remove flat geobuff which breaks display
-mapview(unique_simul, zcol = 'type')
+simul_map <- mapview(unique_simul, zcol = 'type')
+
+```
+
+</details>
+
+```{r map-simultaneous, echo=FALSE, fig.cap= "Map of all sites with simultaneous chlorohpyll *a*, DOC, TSS, and Secchi disk depth measurements within the Aquasat data set."}
+#as a note, fig.cap will not work for this chunk, because markdown does not see interactive mapview as a figure.
+simul_map
 
 ```
 
 ## What is the general relationship between variables in log-log space?
 
-```{r fig-four-vars-scatter, cache = T}
+<details>
+
+<summary>Code to create scatter plot matrix figure.</summary>
+
+```{r four-vars-scatter, cache = T}
 log_simul <- simul_vis %>%
   mutate(across(c(secchi,chl_a,tss,doc,tis), log10)) %>%
   filter(if_all(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
 
-log_simul %>%
+vars_splom <- log_simul %>%
   # randomly sample 20% of each site type to display info.
   sample_frac(0.2) %>%
   ungroup() %>%
@@ -199,5 +229,13 @@ log_simul %>%
           columns = c('secchi','chl_a','tss','doc')) +
   theme_few() + 
   scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown'))
+
+```
+
+</details>
+
+```{r splom-fig, echo=F, fig.cap="Scatter plot matrix of four parameters for a random subsample of data weighted by water type."}
+
+vars_splom
 
 ```

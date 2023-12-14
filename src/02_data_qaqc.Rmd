@@ -23,9 +23,10 @@ library(ggthemes)
 library(knitr)
 library(tidyverse)
 
-data_out_dir = "../data/out"
-
 opts_chunk$set(warning = F, message = F)
+
+data_out_dir <- "../data/out"
+
 ```
 
 ## Chl-a to biomass
@@ -74,8 +75,8 @@ Our philosophy here is that we will use chlorophyll *a* directly as a proxy for
 algal biomass to minimize the number of transformations to this data, since we
 are primarily interested in how algae alters light attenuation, regardless of
 how we estimate algae. However, we still need to calculate non-algal particle
-(NAP) mass. For that we will use a range of values of chlorohpyll:biomass ratio
-and show the impact of picking a sinlge ratio from a set of ranges.
+(NAP) mass. For that we will use a range of values of chlorophyll:biomass ratio
+and show the impact of picking a single ratio from a set of ranges.
 
 *Caveats*
 

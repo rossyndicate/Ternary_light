@@ -32,7 +32,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="download-and-join.html"/>
+<link rel="prev" href="download-and-merge-aquasat-data.html"/>
 
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
@@ -160,16 +160,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <li class="chapter" data-level="1.1" data-path="index.html"><a href="index.html#workflow"><i class="fa fa-check"></i><b>1.1</b> Workflow</a></li>
 </ul></li>
 <li class="part"><span><b>II Data downloads and decisions</b></span></li>
-<li class="chapter" data-level="2" data-path="download-and-join.html"><a href="download-and-join.html"><i class="fa fa-check"></i><b>2</b> Download and Join</a>
+<li class="chapter" data-level="2" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html"><i class="fa fa-check"></i><b>2</b> Download and Merge Aquasat data</a>
 <ul>
-<li class="chapter" data-level="2.1" data-path="download-and-join.html"><a href="download-and-join.html#aquasat-download"><i class="fa fa-check"></i><b>2.1</b> AquaSat download</a></li>
-<li class="chapter" data-level="2.2" data-path="download-and-join.html"><a href="download-and-join.html#aquasat-read-and-join."><i class="fa fa-check"></i><b>2.2</b> AquaSat Read and join.</a></li>
-<li class="chapter" data-level="2.3" data-path="download-and-join.html"><a href="download-and-join.html#data-evalualtion-and-subset"><i class="fa fa-check"></i><b>2.3</b> Data Evalualtion and Subset</a>
+<li class="chapter" data-level="2.1" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#aquasat-download"><i class="fa fa-check"></i><b>2.1</b> AquaSat download</a></li>
+<li class="chapter" data-level="2.2" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#aquasat-read-and-join."><i class="fa fa-check"></i><b>2.2</b> AquaSat Read and join.</a></li>
+<li class="chapter" data-level="2.3" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#data-evalualtion-and-subset"><i class="fa fa-check"></i><b>2.3</b> Data Evalualtion and Subset</a>
 <ul>
-<li class="chapter" data-level="2.3.1" data-path="download-and-join.html"><a href="download-and-join.html#selecting-only-simultaneous-observations"><i class="fa fa-check"></i><b>2.3.1</b> Selecting only simultaneous observations</a></li>
+<li class="chapter" data-level="2.3.1" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#selecting-only-simultaneous-observations"><i class="fa fa-check"></i><b>2.3.1</b> Selecting only simultaneous observations</a></li>
 </ul></li>
-<li class="chapter" data-level="2.4" data-path="download-and-join.html"><a href="download-and-join.html#where-are-sites-with-simultaneous-observations-of-clarity-constituents"><i class="fa fa-check"></i><b>2.4</b> Where are sites with simultaneous observations of clarity constituents?</a></li>
-<li class="chapter" data-level="2.5" data-path="download-and-join.html"><a href="download-and-join.html#what-is-the-general-relationship-between-variables-in-log-log-space"><i class="fa fa-check"></i><b>2.5</b> What is the general relationship between variables in log-log space?</a></li>
+<li class="chapter" data-level="2.4" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#where-are-sites-with-simultaneous-observations-of-clarity-constituents"><i class="fa fa-check"></i><b>2.4</b> Where are sites with simultaneous observations of clarity constituents?</a></li>
+<li class="chapter" data-level="2.5" data-path="download-and-merge-aquasat-data.html"><a href="download-and-merge-aquasat-data.html#what-is-the-general-relationship-between-variables-in-log-log-space"><i class="fa fa-check"></i><b>2.5</b> What is the general relationship between variables in log-log space?</a></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="data-quality-assessments.html"><a href="data-quality-assessments.html"><i class="fa fa-check"></i><b>3</b> Data quality assessments</a>
 <ul>
@@ -201,33 +201,35 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
             <section class="normal" id="section-">
 <div id="data-quality-assessments" class="section level1 hasAnchor" number="3">
 <h1><span class="header-section-number">Part 3</span> Data quality assessments<a href="data-quality-assessments.html#data-quality-assessments" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>Note, also eval = F to save computation time</p>
 <div id="chl-a-to-biomass" class="section level2 hasAnchor" number="3.1">
 <h2><span class="header-section-number">3.1</span> Chl-a to biomass<a href="data-quality-assessments.html#chl-a-to-biomass" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>While it is more common in coastal and oceanic research, inland water scientists
 rarely measure water clarity constituents in the way that is most directly
-transferable to our research question. Ideally we would routinely measure concentrations of
-algae biomass, non-algal particles
-(including inorganic sediment and organic sediment, I like to call this
-stuff dead suspended sediment, but I guess NAP is fine), and dissolved organic
-carbon. These constituents all alter light penetration in water, but they are
-mutually exclusive groups with no measurement overlap between algal particles and NAP
-for example. However, this is not what we usually measure. Instead, we have rich
-datasets of things that could indicate our desired constituents. These map as basically.</p>
+transferable to our research question. Ideally we would routinely measure
+concentrations of algal biomass, non-algal particles (including inorganic
+sediment and organic sediment, I like to call this stuff dead suspended
+sediment, but I guess NAP is fine), and dissolved organic carbon. These
+constituents all alter light penetration in water, but they are mutually
+exclusive groups with no measurement overlap between algal particles and NAP for
+example. However, this is not what we usually measure. Instead, we have rich
+datasets of things that could indicate our desired constituents. These map as
+basically.</p>
 <ul>
-<li>Chlorophyll-a -&gt; proxy for algae biomass.</li>
-<li>Total suspended solids (tss) -&gt; All suspended solids, subtract algae biomass = NAP</li>
+<li>Chlorophyll <em>a</em> -&gt; proxy for algal biomass</li>
+<li>Total suspended solids (TSS) -&gt; All suspended solids, subtract algal
+biomass ≅ NAP</li>
 <li>DOC -&gt; DOC!</li>
 </ul>
-<p>That means we have to basically do one key calculation. Convert chl-a to biomass.
-Then subtract that from tss and assume that is NAP. While this is a absurdly
-simple calculation it is filled with dangers. The relationship between chl-a
-and algae biomass depends on temperature and nutrients and species and is
-<a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016GB005458">not universal</a>.
-Most studies focus on Chl:C ratios, but we are interested in Chl:Biomass ratio,
-for which there are much fewer studies, though some studies below suggest
-a range of 0.005 to 0.1 Chl:biomass. (I need to find the C:Biomass study I used
-forever ago.)</p>
+<p>That means we have to basically do one key calculation. Convert chlorohpyll <em>a</em>
+to biomass. Then subtract that from TSS and assume that is NAP. While this is a
+absurdly simple calculation it is filled with dangers. The relationship between
+chlorphyll <em>a</em> and algal biomass depends on temperature and nutrients and
+species and is <a href="https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016GB005458">not
+universal</a>.
+Most studies focus on chlorohpyll:carbon ratios, but we are interested in
+chlorophyll:biomass ratio, for which there are much fewer studies, though some
+studies below suggest a range of 0.005 to 0.1 chlorophyll:biomass. (I need to
+find the C:Biomass study I used forever ago.)</p>
 <p>Papers that help:</p>
 <ul>
 <li><p><a href="https://aslopubs.onlinelibrary.wiley.com/doi/full/10.1002/lno.10338" class="uri">https://aslopubs.onlinelibrary.wiley.com/doi/full/10.1002/lno.10338</a></p></li>
@@ -237,58 +239,61 @@ forever ago.)</p>
 </ul>
 <div id="approach" class="section level3 hasAnchor" number="3.1.1">
 <h3><span class="header-section-number">3.1.1</span> Approach<a href="data-quality-assessments.html#approach" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>Our philosphy here is that we will use chl-a directly as a proxy for algal biomass
-to minimize the number of transformations to this data, since we are primarily
-interested in how algae alters light attenuation, regardless of how we estimate algae.
-However, we still need to calculate Non-Algal Particle mass. For that we will
-use a range of values of Chl:biomass and show the impact of picking a variety
-of ranges.</p>
+<p>Our philosophy here is that we will use chlorophyll <em>a</em> directly as a proxy for
+algal biomass to minimize the number of transformations to this data, since we
+are primarily interested in how algae alters light attenuation, regardless of
+how we estimate algae. However, we still need to calculate non-algal particle
+(NAP) mass. For that we will use a range of values of chlorophyll:biomass ratio
+and show the impact of picking a single ratio from a set of ranges.</p>
 <p><em>Caveats</em></p>
 <ul>
 <li><p>We don’t have a true NAP to compare how accurate our approach is.</p></li>
 <li><p>We do have Inorganic Sediment, but that is not the same thing as non-algal
-particles, since it excludes particulate organic carbon. Still, where
-we have it, we will examine the relationship between NAP and TIS (total
-inorganic sediment).</p></li>
-<li><p>Not entirely sure how we propogate this uncertainty downstream? Pick an average?</p></li>
+particles, since it excludes particulate organic carbon. Still, where we
+have it, we will examine the relationship between NAP and total inorganic
+sediment (TIS)</p></li>
+<li><p>Not entirely sure how we propogate this uncertainty downstream? Pick an
+average? [[run them all and then get sd/error metrics to describe
+uncertainty]]</p></li>
 </ul>
 <details>
 <summary>
 Code to apply varying algal biomass ratios.
 </summary>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="data-quality-assessments.html#cb8-1" tabindex="-1"></a>in_vis <span class="ot">&lt;-</span> <span class="fu">read_feather</span>(<span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;simul.feather&#39;</span>))</span>
-<span id="cb8-2"><a href="data-quality-assessments.html#cb8-2" tabindex="-1"></a></span>
-<span id="cb8-3"><a href="data-quality-assessments.html#cb8-3" tabindex="-1"></a>no_sech <span class="ot">&lt;-</span> <span class="fu">read_feather</span>(<span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;no_secchi.feather&#39;</span>))</span>
-<span id="cb8-4"><a href="data-quality-assessments.html#cb8-4" tabindex="-1"></a></span>
-<span id="cb8-5"><a href="data-quality-assessments.html#cb8-5" tabindex="-1"></a>range <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">234</span>)</span>
-<span id="cb8-6"><a href="data-quality-assessments.html#cb8-6" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="data-quality-assessments.html#cb8-7" tabindex="-1"></a></span>
-<span id="cb8-8"><a href="data-quality-assessments.html#cb8-8" tabindex="-1"></a><span class="co">#Couldn&#39;t think of a more clever way to multiply</span></span>
-<span id="cb8-9"><a href="data-quality-assessments.html#cb8-9" tabindex="-1"></a><span class="co">#chl_a by the range of values, so just made</span></span>
-<span id="cb8-10"><a href="data-quality-assessments.html#cb8-10" tabindex="-1"></a><span class="co"># dataframe 4 times bigger with new column called ratio. </span></span>
-<span id="cb8-11"><a href="data-quality-assessments.html#cb8-11" tabindex="-1"></a>nap_test <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(no_sech,<span class="at">chl_ratio =</span> range) <span class="sc">%&gt;%</span></span>
-<span id="cb8-12"><a href="data-quality-assessments.html#cb8-12" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">power =</span> <span class="fu">if_else</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>, <span class="fl">0.57</span>, <span class="dv">1</span>),</span>
-<span id="cb8-13"><a href="data-quality-assessments.html#cb8-13" tabindex="-1"></a>         <span class="at">chl_a_biomass =</span> <span class="fu">exp</span>(<span class="fu">log</span>(chl_ratio<span class="sc">/</span><span class="dv">1000</span>)<span class="sc">+</span><span class="fu">log</span>(chl_a)<span class="sc">*</span>power),</span>
-<span id="cb8-14"><a href="data-quality-assessments.html#cb8-14" tabindex="-1"></a>         <span class="at">tss_dead =</span> tss<span class="sc">-</span>chl_a_biomass)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="data-quality-assessments.html#cb6-1" tabindex="-1"></a>in_vis <span class="ot">&lt;-</span> <span class="fu">read_feather</span>(<span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;simul.feather&#39;</span>))</span>
+<span id="cb6-2"><a href="data-quality-assessments.html#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="data-quality-assessments.html#cb6-3" tabindex="-1"></a>no_sech <span class="ot">&lt;-</span> <span class="fu">read_feather</span>(<span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;no_secchi.feather&#39;</span>))</span>
+<span id="cb6-4"><a href="data-quality-assessments.html#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="data-quality-assessments.html#cb6-5" tabindex="-1"></a>range <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">50</span>, <span class="dv">100</span>, <span class="dv">200</span>, <span class="dv">234</span>)</span>
+<span id="cb6-6"><a href="data-quality-assessments.html#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="data-quality-assessments.html#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="data-quality-assessments.html#cb6-8" tabindex="-1"></a><span class="co">#Couldn&#39;t think of a more clever way to multiply</span></span>
+<span id="cb6-9"><a href="data-quality-assessments.html#cb6-9" tabindex="-1"></a><span class="co">#chl_a by the range of values, so just made</span></span>
+<span id="cb6-10"><a href="data-quality-assessments.html#cb6-10" tabindex="-1"></a><span class="co"># dataframe 4 times bigger with new column called ratio. </span></span>
+<span id="cb6-11"><a href="data-quality-assessments.html#cb6-11" tabindex="-1"></a>nap_test <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(no_sech, <span class="at">chl_ratio =</span> range) <span class="sc">%&gt;%</span></span>
+<span id="cb6-12"><a href="data-quality-assessments.html#cb6-12" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">power =</span> <span class="fu">if_else</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>, <span class="fl">0.57</span>, <span class="dv">1</span>),</span>
+<span id="cb6-13"><a href="data-quality-assessments.html#cb6-13" tabindex="-1"></a>         <span class="at">chl_a_biomass =</span> <span class="fu">exp</span>(<span class="fu">log</span>(chl_ratio<span class="sc">/</span><span class="dv">1000</span>)<span class="sc">+</span><span class="fu">log</span>(chl_a)<span class="sc">*</span>power),</span>
+<span id="cb6-14"><a href="data-quality-assessments.html#cb6-14" tabindex="-1"></a>         <span class="at">tss_dead =</span> tss<span class="sc">-</span>chl_a_biomass)</span></code></pre></div>
 </details>
 </div>
 <div id="simple-evaluations-of-conversion" class="section level3 hasAnchor" number="3.1.2">
 <h3><span class="header-section-number">3.1.2</span> Simple evaluations of conversion<a href="data-quality-assessments.html#simple-evaluations-of-conversion" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="negative-tss_dead" class="section level4 hasAnchor" number="3.1.2.1">
 <h4><span class="header-section-number">3.1.2.1</span> Negative tss_dead<a href="data-quality-assessments.html#negative-tss_dead" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>Probably the simplest way to see which ratios are more appropriate is to
-look at how that impacts how many tss_dead observations are negative (impossible).</p>
+<p>Probably the simplest way to see which ratios are more appropriate is to look at
+how that impacts how many tss_dead observations are negative, which is
+impossible.</p>
 <details>
 <summary>
 Code for table.
 </summary>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="data-quality-assessments.html#cb9-1" tabindex="-1"></a>neg_tss_dead <span class="ot">&lt;-</span> nap_test <span class="sc">%&gt;%</span></span>
-<span id="cb9-2"><a href="data-quality-assessments.html#cb9-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">negative =</span> <span class="fu">ifelse</span>(tss_dead <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="st">&#39;negative&#39;</span>, <span class="st">&#39;positive&#39;</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb9-3"><a href="data-quality-assessments.html#cb9-3" tabindex="-1"></a>  <span class="fu">group_by</span>(negative,chl_ratio) <span class="sc">%&gt;%</span></span>
-<span id="cb9-4"><a href="data-quality-assessments.html#cb9-4" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb9-5"><a href="data-quality-assessments.html#cb9-5" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">&#39;negative&#39;</span>,<span class="at">values_from =</span> <span class="st">&#39;n&#39;</span>)  <span class="sc">%&gt;%</span></span>
-<span id="cb9-6"><a href="data-quality-assessments.html#cb9-6" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">percent_neg =</span> negative<span class="sc">/</span>(positive<span class="sc">+</span>negative)<span class="sc">*</span><span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb9-7"><a href="data-quality-assessments.html#cb9-7" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Varying chlorohpyll ratios and summary of negative tss_dead results.&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="data-quality-assessments.html#cb7-1" tabindex="-1"></a>neg_tss_dead <span class="ot">&lt;-</span> nap_test <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="data-quality-assessments.html#cb7-2" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">negative =</span> <span class="fu">ifelse</span>(tss_dead <span class="sc">&lt;</span> <span class="dv">0</span>, <span class="st">&#39;negative&#39;</span>, <span class="st">&#39;positive&#39;</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="data-quality-assessments.html#cb7-3" tabindex="-1"></a>  <span class="fu">group_by</span>(negative,chl_ratio) <span class="sc">%&gt;%</span></span>
+<span id="cb7-4"><a href="data-quality-assessments.html#cb7-4" tabindex="-1"></a>  <span class="fu">count</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="data-quality-assessments.html#cb7-5" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">&#39;negative&#39;</span>,<span class="at">values_from =</span> <span class="st">&#39;n&#39;</span>)  <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="data-quality-assessments.html#cb7-6" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">percent_neg =</span> negative<span class="sc">/</span>(positive<span class="sc">+</span>negative)<span class="sc">*</span><span class="dv">100</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-7"><a href="data-quality-assessments.html#cb7-7" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Varying chlorohpyll ratios and summary of negative tss_dead results.&quot;</span>)</span></code></pre></div>
 </details>
 <table>
 <caption>
@@ -373,43 +378,44 @@ percent_neg
 NAP estimates, but there is a big increase between 100-200, making me think the
 “correct” ratio may be in there somewhere.</p>
 </div>
-<div id="relationship-between-chl-a-and-tss_dead" class="section level4 hasAnchor" number="3.1.2.2">
-<h4><span class="header-section-number">3.1.2.2</span> Relationship between chl-a and tss_dead<a href="data-quality-assessments.html#relationship-between-chl-a-and-tss_dead" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>If you recall from the previous section, there was a strong linear
-relationship between chl-a and tss across all sites and water types (r2 &gt; 0.35).
-One effect we’d expect to see with the tss_dead estimate is that this relationship
-should decay. While there are reasons for chl-a to be correlated with tss (sediment
-brings nutrients for example), chl-a also includes algal cells which are suspended
-particles themselves. If this approach worked well, we should see weaker relationships
-between tss_dead and chl-a</p>
+<div id="relationship-between-chlorophyll-a-and-tss_dead" class="section level4 hasAnchor" number="3.1.2.2">
+<h4><span class="header-section-number">3.1.2.2</span> Relationship between chlorophyll-a and tss_dead<a href="data-quality-assessments.html#relationship-between-chlorophyll-a-and-tss_dead" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>If you recall from the previous section, there was a linear relationship between
+chlorophyll <em>a</em> and TSS across all sites and water types (r<sup>2</sup> &gt; 0.35). One
+effect we’d expect to see with the tss_dead estimate is that this relationship
+should decay. While there are reasons for chlorophyll <em>a</em> to be correlated with
+TSS (sediment brings nutrients for example), chlorophyll <em>a</em> also includes algal
+cells which are suspended particles themselves. If this approach worked well, we
+should see weaker relationships between tss_dead and chlorophyll <em>a</em>.</p>
 <details>
 <summary>
 Code for figure.
 </summary>
-<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="data-quality-assessments.html#cb10-1" tabindex="-1"></a><span class="co">#Subset for plotting purposes</span></span>
-<span id="cb10-2"><a href="data-quality-assessments.html#cb10-2" tabindex="-1"></a>nap_test <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="data-quality-assessments.html#cb10-3" tabindex="-1"></a>  <span class="co">#Remove negatives and very small numbers (ug/L of sediment is basically zero)</span></span>
-<span id="cb10-4"><a href="data-quality-assessments.html#cb10-4" tabindex="-1"></a>  <span class="fu">filter</span>(tss_dead <span class="sc">&gt;</span> <span class="fl">0.001</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb10-5"><a href="data-quality-assessments.html#cb10-5" tabindex="-1"></a>  <span class="fu">sample_frac</span>(<span class="fl">0.1</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb10-6"><a href="data-quality-assessments.html#cb10-6" tabindex="-1"></a><span class="fu">ggplot</span>(., <span class="fu">aes</span>(chl_a,tss_dead,<span class="at">color =</span> type)) <span class="sc">+</span></span>
-<span id="cb10-7"><a href="data-quality-assessments.html#cb10-7" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>chl_ratio) <span class="sc">+</span> </span>
-<span id="cb10-8"><a href="data-quality-assessments.html#cb10-8" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
-<span id="cb10-9"><a href="data-quality-assessments.html#cb10-9" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span> </span>
-<span id="cb10-10"><a href="data-quality-assessments.html#cb10-10" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
-<span id="cb10-11"><a href="data-quality-assessments.html#cb10-11" tabindex="-1"></a>  <span class="fu">stat_poly_eq</span>() <span class="sc">+</span> </span>
-<span id="cb10-12"><a href="data-quality-assessments.html#cb10-12" tabindex="-1"></a>  <span class="fu">theme_few</span>() <span class="sc">+</span> </span>
-<span id="cb10-13"><a href="data-quality-assessments.html#cb10-13" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&#39;seagreen3&#39;</span>,<span class="st">&#39;skyblue3&#39;</span>,<span class="st">&#39;saddlebrown&#39;</span>)) </span></code></pre></div>
-<div class="figure"><span style="display:block;" id="fig:fig-tss-dead-chla"></span>
-<img src="Ternary-Light-Partitioning_files/figure-html/fig-tss-dead-chla-1.png" alt="At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely" width="672" />
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="data-quality-assessments.html#cb8-1" tabindex="-1"></a><span class="co">#Subset for plotting purposes</span></span>
+<span id="cb8-2"><a href="data-quality-assessments.html#cb8-2" tabindex="-1"></a>tss_dead_chla <span class="ot">&lt;-</span> nap_test <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="data-quality-assessments.html#cb8-3" tabindex="-1"></a>  <span class="co">#Remove negatives and very small numbers (ug/L of sediment is basically zero)</span></span>
+<span id="cb8-4"><a href="data-quality-assessments.html#cb8-4" tabindex="-1"></a>  <span class="fu">filter</span>(tss_dead <span class="sc">&gt;</span> <span class="fl">0.001</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-5"><a href="data-quality-assessments.html#cb8-5" tabindex="-1"></a>  <span class="fu">sample_frac</span>(<span class="fl">0.1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="data-quality-assessments.html#cb8-6" tabindex="-1"></a><span class="fu">ggplot</span>(., <span class="fu">aes</span>(chl_a,tss_dead,<span class="at">color =</span> type)) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="data-quality-assessments.html#cb8-7" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>chl_ratio) <span class="sc">+</span> </span>
+<span id="cb8-8"><a href="data-quality-assessments.html#cb8-8" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span> </span>
+<span id="cb8-9"><a href="data-quality-assessments.html#cb8-9" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span> </span>
+<span id="cb8-10"><a href="data-quality-assessments.html#cb8-10" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span> </span>
+<span id="cb8-11"><a href="data-quality-assessments.html#cb8-11" tabindex="-1"></a>  <span class="fu">stat_poly_eq</span>(<span class="at">small.r =</span> T) <span class="sc">+</span> </span>
+<span id="cb8-12"><a href="data-quality-assessments.html#cb8-12" tabindex="-1"></a>  <span class="fu">theme_few</span>() <span class="sc">+</span> </span>
+<span id="cb8-13"><a href="data-quality-assessments.html#cb8-13" tabindex="-1"></a>  <span class="fu">scale_color_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">&#39;seagreen3&#39;</span>,<span class="st">&#39;skyblue3&#39;</span>,<span class="st">&#39;saddlebrown&#39;</span>)) </span></code></pre></div>
+</details>
+<div class="figure"><span style="display:block;" id="fig:unnamed-chunk-1"></span>
+<img src="Ternary-Light-Partitioning_files/figure-html/unnamed-chunk-1-1.png" alt="At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely" width="672" />
 <p class="caption">
 Figure 3.1: At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely
 </p>
 </div>
-</details>
 <ul>
 <li>What to do with this?</li>
-<li>234*chl^0.57 seems logical but still high correlation in lakes between tss/chl_a,
-but that may be a real thing for lakes? (corr is actually higher with this approach)</li>
+<li>234*chl<sup>0.57</sup> seems logical but still high correlation in lakes between
+tss/chl_a, but that may be a real thing for lakes? (corr is actually higher
+with this approach)</li>
 </ul>
 </div>
 </div>
@@ -417,7 +423,8 @@ but that may be a real thing for lakes? (corr is actually higher with this appro
 <h3><span class="header-section-number">3.1.3</span> Light attenuation model exploration<a href="data-quality-assessments.html#light-attenuation-model-exploration" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Model assumptions</p>
 <ul>
-<li><p>Not searching for intercept assuming observed 0.15 coefficient for intercept (pure water attenuation)</p></li>
+<li><p>Not searching for intercept assuming observed 0.15 coefficient for intercept
+(pure water attenuation)</p></li>
 <li><p>For now, not doing the middle 2.5-97.5% of data, can add back in.</p></li>
 <li><p>Normality assumptions aren’t fully met</p></li>
 </ul>
@@ -425,63 +432,66 @@ but that may be a real thing for lakes? (corr is actually higher with this appro
 <summary>
 Code for this section.
 </summary>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="data-quality-assessments.html#cb11-1" tabindex="-1"></a>nap_est_no_secchi <span class="ot">&lt;-</span> nap_test <span class="sc">%&gt;%</span></span>
-<span id="cb11-2"><a href="data-quality-assessments.html#cb11-2" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb11-3"><a href="data-quality-assessments.html#cb11-3" tabindex="-1"></a>  <span class="fu">filter</span>(tss_dead <span class="sc">&gt;</span> <span class="fl">0.01</span>,</span>
-<span id="cb11-4"><a href="data-quality-assessments.html#cb11-4" tabindex="-1"></a>         secchi <span class="sc">&lt;</span> <span class="dv">15</span> <span class="sc">|</span> <span class="fu">is.na</span>(secchi)) <span class="sc">%&gt;%</span></span>
-<span id="cb11-5"><a href="data-quality-assessments.html#cb11-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">secchi =</span> <span class="fu">ifelse</span>(secchi <span class="sc">&lt;</span> <span class="fl">0.1</span>,<span class="fl">0.1</span>,secchi),</span>
-<span id="cb11-6"><a href="data-quality-assessments.html#cb11-6" tabindex="-1"></a>        <span class="at">kd =</span> (<span class="dv">1</span><span class="sc">/</span>(secchi)))</span>
-<span id="cb11-7"><a href="data-quality-assessments.html#cb11-7" tabindex="-1"></a></span>
-<span id="cb11-8"><a href="data-quality-assessments.html#cb11-8" tabindex="-1"></a><span class="fu">write_feather</span>(nap_est_no_secchi <span class="sc">%&gt;%</span></span>
-<span id="cb11-9"><a href="data-quality-assessments.html#cb11-9" tabindex="-1"></a>                <span class="fu">filter</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>),</span>
-<span id="cb11-10"><a href="data-quality-assessments.html#cb11-10" tabindex="-1"></a>              <span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;no_secchi_clean.feather&#39;</span>))</span>
-<span id="cb11-11"><a href="data-quality-assessments.html#cb11-11" tabindex="-1"></a></span>
-<span id="cb11-12"><a href="data-quality-assessments.html#cb11-12" tabindex="-1"></a>nap_est <span class="ot">&lt;-</span> nap_est_no_secchi <span class="sc">%&gt;%</span></span>
-<span id="cb11-13"><a href="data-quality-assessments.html#cb11-13" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(secchi))</span>
-<span id="cb11-14"><a href="data-quality-assessments.html#cb11-14" tabindex="-1"></a></span>
-<span id="cb11-15"><a href="data-quality-assessments.html#cb11-15" tabindex="-1"></a></span>
-<span id="cb11-16"><a href="data-quality-assessments.html#cb11-16" tabindex="-1"></a>k_w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span><span class="fl">1.5</span><span class="sc">/</span><span class="fu">max</span>(nap_est<span class="sc">$</span>secchi)</span>
-<span id="cb11-17"><a href="data-quality-assessments.html#cb11-17" tabindex="-1"></a></span>
-<span id="cb11-18"><a href="data-quality-assessments.html#cb11-18" tabindex="-1"></a>kd_mod <span class="ot">&lt;-</span> <span class="cf">function</span>(df){</span>
-<span id="cb11-19"><a href="data-quality-assessments.html#cb11-19" tabindex="-1"></a>  mod <span class="ot">&lt;-</span> <span class="fu">lm</span>((kd<span class="sc">-</span>k_w)  <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> tss_dead <span class="sc">+</span> doc <span class="sc">+</span> chl_a, <span class="at">data =</span> df)</span>
-<span id="cb11-20"><a href="data-quality-assessments.html#cb11-20" tabindex="-1"></a>}</span>
-<span id="cb11-21"><a href="data-quality-assessments.html#cb11-21" tabindex="-1"></a></span>
-<span id="cb11-22"><a href="data-quality-assessments.html#cb11-22" tabindex="-1"></a>kd_resid_extract <span class="ot">&lt;-</span> <span class="cf">function</span>(df,mod){</span>
-<span id="cb11-23"><a href="data-quality-assessments.html#cb11-23" tabindex="-1"></a>  df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb11-24"><a href="data-quality-assessments.html#cb11-24" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">residuals =</span> mod<span class="sc">$</span>residuals,</span>
-<span id="cb11-25"><a href="data-quality-assessments.html#cb11-25" tabindex="-1"></a>           <span class="at">pred =</span> mod<span class="sc">$</span>fitted.values <span class="sc">+</span> k_w)</span>
-<span id="cb11-26"><a href="data-quality-assessments.html#cb11-26" tabindex="-1"></a>}</span>
-<span id="cb11-27"><a href="data-quality-assessments.html#cb11-27" tabindex="-1"></a></span>
-<span id="cb11-28"><a href="data-quality-assessments.html#cb11-28" tabindex="-1"></a><span class="co"># nap_est &lt;- nap_est %&gt;%</span></span>
-<span id="cb11-29"><a href="data-quality-assessments.html#cb11-29" tabindex="-1"></a><span class="co">#   filter(SiteID %in% fine_sites$SiteID) </span></span>
-<span id="cb11-30"><a href="data-quality-assessments.html#cb11-30" tabindex="-1"></a></span>
-<span id="cb11-31"><a href="data-quality-assessments.html#cb11-31" tabindex="-1"></a>nap_mods <span class="ot">&lt;-</span> <span class="fu">group_by</span>(nap_est,chl_ratio) <span class="sc">%&gt;%</span></span>
-<span id="cb11-32"><a href="data-quality-assessments.html#cb11-32" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb11-33"><a href="data-quality-assessments.html#cb11-33" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mods =</span> <span class="fu">map</span>(data,kd_mod),</span>
-<span id="cb11-34"><a href="data-quality-assessments.html#cb11-34" tabindex="-1"></a>         <span class="at">data =</span> <span class="fu">map2</span>(data, mods, kd_resid_extract))</span>
-<span id="cb11-35"><a href="data-quality-assessments.html#cb11-35" tabindex="-1"></a></span>
-<span id="cb11-36"><a href="data-quality-assessments.html#cb11-36" tabindex="-1"></a>mod234 <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
-<span id="cb11-37"><a href="data-quality-assessments.html#cb11-37" tabindex="-1"></a>  <span class="fu">filter</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>)</span>
-<span id="cb11-38"><a href="data-quality-assessments.html#cb11-38" tabindex="-1"></a></span>
-<span id="cb11-39"><a href="data-quality-assessments.html#cb11-39" tabindex="-1"></a>nap_resid <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
-<span id="cb11-40"><a href="data-quality-assessments.html#cb11-40" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mods) <span class="sc">%&gt;%</span></span>
-<span id="cb11-41"><a href="data-quality-assessments.html#cb11-41" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">%&gt;%</span></span>
-<span id="cb11-42"><a href="data-quality-assessments.html#cb11-42" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ratio_rmse =</span> <span class="fu">paste</span>(<span class="st">&#39;ratio =&#39;</span>,chl_ratio,<span class="st">&#39;, r^2 =&#39;</span>, <span class="fu">round</span>(<span class="fu">cor</span>(pred,kd)<span class="sc">^</span><span class="dv">2</span>,<span class="dv">2</span>)),</span>
-<span id="cb11-43"><a href="data-quality-assessments.html#cb11-43" tabindex="-1"></a>         <span class="at">year =</span> <span class="fu">year</span>(date_unity))</span>
-<span id="cb11-44"><a href="data-quality-assessments.html#cb11-44" tabindex="-1"></a></span>
-<span id="cb11-45"><a href="data-quality-assessments.html#cb11-45" tabindex="-1"></a>kd_obs_pred <span class="ot">&lt;-</span> nap_resid <span class="sc">%&gt;%</span></span>
-<span id="cb11-46"><a href="data-quality-assessments.html#cb11-46" tabindex="-1"></a>  <span class="fu">sample_frac</span>(<span class="fl">0.2</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb11-47"><a href="data-quality-assessments.html#cb11-47" tabindex="-1"></a>  <span class="fu">ggplot</span>(., <span class="fu">aes</span>(kd,pred, <span class="at">color =</span> <span class="fu">year</span>(date_unity))) <span class="sc">+</span> </span>
-<span id="cb11-48"><a href="data-quality-assessments.html#cb11-48" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">shape =</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
-<span id="cb11-49"><a href="data-quality-assessments.html#cb11-49" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>ratio_rmse) <span class="sc">+</span> </span>
-<span id="cb11-50"><a href="data-quality-assessments.html#cb11-50" tabindex="-1"></a>  <span class="fu">theme_few</span>() <span class="sc">+</span> </span>
-<span id="cb11-51"><a href="data-quality-assessments.html#cb11-51" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;kd (1/secchi)&#39;</span>) <span class="sc">+</span></span>
-<span id="cb11-52"><a href="data-quality-assessments.html#cb11-52" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;predicted kd&#39;</span>) <span class="sc">+</span></span>
-<span id="cb11-53"><a href="data-quality-assessments.html#cb11-53" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span> </span>
-<span id="cb11-54"><a href="data-quality-assessments.html#cb11-54" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
-<span id="cb11-55"><a href="data-quality-assessments.html#cb11-55" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> </span>
-<span id="cb11-56"><a href="data-quality-assessments.html#cb11-56" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method =</span> <span class="st">&#39;lm&#39;</span>,<span class="at">se =</span> F, <span class="at">color =</span> <span class="st">&#39;black&#39;</span>) <span class="sc">+</span></span>
-<span id="cb11-57"><a href="data-quality-assessments.html#cb11-57" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="st">&#39;red&#39;</span>) </span></code></pre></div>
+<p>[[noting that kd here is 1/secchi, which is yet a different constant for
+calculating kd, also for the derp in the class (me) please give insight on the
+1/1.5/max secchi as kw.]]</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="data-quality-assessments.html#cb9-1" tabindex="-1"></a>nap_est_no_secchi <span class="ot">&lt;-</span> nap_test <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="data-quality-assessments.html#cb9-2" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="data-quality-assessments.html#cb9-3" tabindex="-1"></a>  <span class="fu">filter</span>(tss_dead <span class="sc">&gt;</span> <span class="fl">0.01</span>,</span>
+<span id="cb9-4"><a href="data-quality-assessments.html#cb9-4" tabindex="-1"></a>         secchi <span class="sc">&lt;</span> <span class="dv">15</span> <span class="sc">|</span> <span class="fu">is.na</span>(secchi)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="data-quality-assessments.html#cb9-5" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">secchi =</span> <span class="fu">ifelse</span>(secchi <span class="sc">&lt;</span> <span class="fl">0.1</span>,<span class="fl">0.1</span>,secchi),</span>
+<span id="cb9-6"><a href="data-quality-assessments.html#cb9-6" tabindex="-1"></a>        <span class="at">kd =</span> (<span class="dv">1</span><span class="sc">/</span>(secchi)))</span>
+<span id="cb9-7"><a href="data-quality-assessments.html#cb9-7" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="data-quality-assessments.html#cb9-8" tabindex="-1"></a><span class="fu">write_feather</span>(nap_est_no_secchi <span class="sc">%&gt;%</span></span>
+<span id="cb9-9"><a href="data-quality-assessments.html#cb9-9" tabindex="-1"></a>                <span class="fu">filter</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>),</span>
+<span id="cb9-10"><a href="data-quality-assessments.html#cb9-10" tabindex="-1"></a>              <span class="fu">file.path</span>(data_out_dir, <span class="st">&#39;no_secchi_clean.feather&#39;</span>))</span>
+<span id="cb9-11"><a href="data-quality-assessments.html#cb9-11" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="data-quality-assessments.html#cb9-12" tabindex="-1"></a>nap_est <span class="ot">&lt;-</span> nap_est_no_secchi <span class="sc">%&gt;%</span></span>
+<span id="cb9-13"><a href="data-quality-assessments.html#cb9-13" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(secchi))</span>
+<span id="cb9-14"><a href="data-quality-assessments.html#cb9-14" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="data-quality-assessments.html#cb9-15" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="data-quality-assessments.html#cb9-16" tabindex="-1"></a>k_w <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span><span class="fl">1.5</span><span class="sc">/</span><span class="fu">max</span>(nap_est<span class="sc">$</span>secchi)</span>
+<span id="cb9-17"><a href="data-quality-assessments.html#cb9-17" tabindex="-1"></a></span>
+<span id="cb9-18"><a href="data-quality-assessments.html#cb9-18" tabindex="-1"></a>kd_mod <span class="ot">&lt;-</span> <span class="cf">function</span>(df){</span>
+<span id="cb9-19"><a href="data-quality-assessments.html#cb9-19" tabindex="-1"></a>  mod <span class="ot">&lt;-</span> <span class="fu">lm</span>((kd<span class="sc">-</span>k_w)  <span class="sc">~</span> <span class="dv">0</span> <span class="sc">+</span> tss_dead <span class="sc">+</span> doc <span class="sc">+</span> chl_a, <span class="at">data =</span> df)</span>
+<span id="cb9-20"><a href="data-quality-assessments.html#cb9-20" tabindex="-1"></a>}</span>
+<span id="cb9-21"><a href="data-quality-assessments.html#cb9-21" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="data-quality-assessments.html#cb9-22" tabindex="-1"></a>kd_resid_extract <span class="ot">&lt;-</span> <span class="cf">function</span>(df,mod){</span>
+<span id="cb9-23"><a href="data-quality-assessments.html#cb9-23" tabindex="-1"></a>  df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb9-24"><a href="data-quality-assessments.html#cb9-24" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">residuals =</span> mod<span class="sc">$</span>residuals,</span>
+<span id="cb9-25"><a href="data-quality-assessments.html#cb9-25" tabindex="-1"></a>           <span class="at">pred =</span> mod<span class="sc">$</span>fitted.values <span class="sc">+</span> k_w)</span>
+<span id="cb9-26"><a href="data-quality-assessments.html#cb9-26" tabindex="-1"></a>}</span>
+<span id="cb9-27"><a href="data-quality-assessments.html#cb9-27" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="data-quality-assessments.html#cb9-28" tabindex="-1"></a><span class="co"># nap_est &lt;- nap_est %&gt;%</span></span>
+<span id="cb9-29"><a href="data-quality-assessments.html#cb9-29" tabindex="-1"></a><span class="co">#   filter(SiteID %in% fine_sites$SiteID) </span></span>
+<span id="cb9-30"><a href="data-quality-assessments.html#cb9-30" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="data-quality-assessments.html#cb9-31" tabindex="-1"></a>nap_mods <span class="ot">&lt;-</span> <span class="fu">group_by</span>(nap_est,chl_ratio) <span class="sc">%&gt;%</span></span>
+<span id="cb9-32"><a href="data-quality-assessments.html#cb9-32" tabindex="-1"></a>  <span class="fu">nest</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-33"><a href="data-quality-assessments.html#cb9-33" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">mods =</span> <span class="fu">map</span>(data, kd_mod),</span>
+<span id="cb9-34"><a href="data-quality-assessments.html#cb9-34" tabindex="-1"></a>         <span class="at">data =</span> <span class="fu">map2</span>(data, mods, kd_resid_extract))</span>
+<span id="cb9-35"><a href="data-quality-assessments.html#cb9-35" tabindex="-1"></a></span>
+<span id="cb9-36"><a href="data-quality-assessments.html#cb9-36" tabindex="-1"></a>mod234 <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
+<span id="cb9-37"><a href="data-quality-assessments.html#cb9-37" tabindex="-1"></a>  <span class="fu">filter</span>(chl_ratio <span class="sc">==</span> <span class="dv">234</span>)</span>
+<span id="cb9-38"><a href="data-quality-assessments.html#cb9-38" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="data-quality-assessments.html#cb9-39" tabindex="-1"></a>nap_resid <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
+<span id="cb9-40"><a href="data-quality-assessments.html#cb9-40" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mods) <span class="sc">%&gt;%</span></span>
+<span id="cb9-41"><a href="data-quality-assessments.html#cb9-41" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">%&gt;%</span></span>
+<span id="cb9-42"><a href="data-quality-assessments.html#cb9-42" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ratio_rmse =</span> <span class="fu">paste</span>(<span class="st">&#39;ratio =&#39;</span>,chl_ratio,<span class="st">&#39;, r^2 =&#39;</span>, <span class="fu">round</span>(<span class="fu">cor</span>(pred,kd)<span class="sc">^</span><span class="dv">2</span>,<span class="dv">2</span>)),</span>
+<span id="cb9-43"><a href="data-quality-assessments.html#cb9-43" tabindex="-1"></a>         <span class="at">year =</span> <span class="fu">year</span>(date_unity))</span>
+<span id="cb9-44"><a href="data-quality-assessments.html#cb9-44" tabindex="-1"></a></span>
+<span id="cb9-45"><a href="data-quality-assessments.html#cb9-45" tabindex="-1"></a>kd_obs_pred <span class="ot">&lt;-</span> nap_resid <span class="sc">%&gt;%</span></span>
+<span id="cb9-46"><a href="data-quality-assessments.html#cb9-46" tabindex="-1"></a>  <span class="fu">sample_frac</span>(<span class="fl">0.2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-47"><a href="data-quality-assessments.html#cb9-47" tabindex="-1"></a>  <span class="fu">ggplot</span>(., <span class="fu">aes</span>(kd,pred, <span class="at">color =</span> <span class="fu">year</span>(date_unity))) <span class="sc">+</span> </span>
+<span id="cb9-48"><a href="data-quality-assessments.html#cb9-48" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">shape =</span> <span class="dv">1</span>) <span class="sc">+</span> </span>
+<span id="cb9-49"><a href="data-quality-assessments.html#cb9-49" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>ratio_rmse) <span class="sc">+</span> </span>
+<span id="cb9-50"><a href="data-quality-assessments.html#cb9-50" tabindex="-1"></a>  <span class="fu">theme_few</span>() <span class="sc">+</span> </span>
+<span id="cb9-51"><a href="data-quality-assessments.html#cb9-51" tabindex="-1"></a>  <span class="fu">xlab</span>(<span class="st">&#39;kd (1/secchi)&#39;</span>) <span class="sc">+</span> <span class="co">#tagging this too, as the constant of 1.</span></span>
+<span id="cb9-52"><a href="data-quality-assessments.html#cb9-52" tabindex="-1"></a>  <span class="fu">ylab</span>(<span class="st">&#39;predicted kd&#39;</span>) <span class="sc">+</span></span>
+<span id="cb9-53"><a href="data-quality-assessments.html#cb9-53" tabindex="-1"></a>  <span class="fu">scale_x_log10</span>() <span class="sc">+</span> </span>
+<span id="cb9-54"><a href="data-quality-assessments.html#cb9-54" tabindex="-1"></a>  <span class="fu">scale_y_log10</span>() <span class="sc">+</span></span>
+<span id="cb9-55"><a href="data-quality-assessments.html#cb9-55" tabindex="-1"></a>  <span class="fu">scale_color_viridis_c</span>() <span class="sc">+</span> </span>
+<span id="cb9-56"><a href="data-quality-assessments.html#cb9-56" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method =</span> <span class="st">&#39;lm&#39;</span>,<span class="at">se =</span> F, <span class="at">color =</span> <span class="st">&#39;black&#39;</span>) <span class="sc">+</span></span>
+<span id="cb9-57"><a href="data-quality-assessments.html#cb9-57" tabindex="-1"></a>  <span class="fu">geom_abline</span>(<span class="at">intercept =</span> <span class="dv">0</span>, <span class="at">slope =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="st">&#39;red&#39;</span>) </span></code></pre></div>
 </details>
 <div class="figure">
 <img src="Ternary-Light-Partitioning_files/figure-html/fig%20kd-pred-obs-1.png" alt="Modelled light extinction coefficient (Kd) versus observed, red line is 1:1 line and blue is line of best fit, r^2 hardly varies between chlorophyll a conversion approaches." width="672" />
@@ -501,18 +511,18 @@ Code for this section.
 <summary>
 Code for table.
 </summary>
-<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="data-quality-assessments.html#cb12-1" tabindex="-1"></a>nap_slopes <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
-<span id="cb12-2"><a href="data-quality-assessments.html#cb12-2" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>data) <span class="sc">%&gt;%</span></span>
-<span id="cb12-3"><a href="data-quality-assessments.html#cb12-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">glance =</span> <span class="fu">map</span>(mods, tidy)) <span class="sc">%&gt;%</span></span>
-<span id="cb12-4"><a href="data-quality-assessments.html#cb12-4" tabindex="-1"></a>  <span class="fu">unnest</span>(glance) <span class="sc">%&gt;%</span></span>
-<span id="cb12-5"><a href="data-quality-assessments.html#cb12-5" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mods,<span class="sc">-</span>std.error,<span class="sc">-</span>statistic) <span class="sc">%&gt;%</span></span>
-<span id="cb12-6"><a href="data-quality-assessments.html#cb12-6" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">&#39;term&#39;</span>, <span class="at">values_from =</span> <span class="st">&#39;estimate&#39;</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-7"><a href="data-quality-assessments.html#cb12-7" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Varying chlorophyll ratios and summary of slopes across parameters.&quot;</span>)</span>
-<span id="cb12-8"><a href="data-quality-assessments.html#cb12-8" tabindex="-1"></a></span>
-<span id="cb12-9"><a href="data-quality-assessments.html#cb12-9" tabindex="-1"></a><span class="co"># kable(nap_slopes) %&gt;%</span></span>
-<span id="cb12-10"><a href="data-quality-assessments.html#cb12-10" tabindex="-1"></a><span class="co">#   kable_paper() %&gt;%</span></span>
-<span id="cb12-11"><a href="data-quality-assessments.html#cb12-11" tabindex="-1"></a><span class="co">#   scroll_box(width = &#39;100%&#39;, height = &#39;600px&#39;) %&gt;%</span></span>
-<span id="cb12-12"><a href="data-quality-assessments.html#cb12-12" tabindex="-1"></a><span class="co">#   kable_styling(bootstrap_options = &#39;striped&#39;, full_width = T)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="data-quality-assessments.html#cb10-1" tabindex="-1"></a>nap_slopes <span class="ot">&lt;-</span> nap_mods <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="data-quality-assessments.html#cb10-2" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>data) <span class="sc">%&gt;%</span></span>
+<span id="cb10-3"><a href="data-quality-assessments.html#cb10-3" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">glance =</span> <span class="fu">map</span>(mods, tidy)) <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="data-quality-assessments.html#cb10-4" tabindex="-1"></a>  <span class="fu">unnest</span>(glance) <span class="sc">%&gt;%</span></span>
+<span id="cb10-5"><a href="data-quality-assessments.html#cb10-5" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>mods,<span class="sc">-</span>std.error,<span class="sc">-</span>statistic) <span class="sc">%&gt;%</span></span>
+<span id="cb10-6"><a href="data-quality-assessments.html#cb10-6" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> <span class="st">&#39;term&#39;</span>, <span class="at">values_from =</span> <span class="st">&#39;estimate&#39;</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-7"><a href="data-quality-assessments.html#cb10-7" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">&quot;Varying chlorophyll ratios and summary of slopes across parameters.&quot;</span>)</span>
+<span id="cb10-8"><a href="data-quality-assessments.html#cb10-8" tabindex="-1"></a></span>
+<span id="cb10-9"><a href="data-quality-assessments.html#cb10-9" tabindex="-1"></a><span class="co"># kable(nap_slopes) %&gt;%</span></span>
+<span id="cb10-10"><a href="data-quality-assessments.html#cb10-10" tabindex="-1"></a><span class="co">#   kable_paper() %&gt;%</span></span>
+<span id="cb10-11"><a href="data-quality-assessments.html#cb10-11" tabindex="-1"></a><span class="co">#   scroll_box(width = &#39;100%&#39;, height = &#39;600px&#39;) %&gt;%</span></span>
+<span id="cb10-12"><a href="data-quality-assessments.html#cb10-12" tabindex="-1"></a><span class="co">#   kable_styling(bootstrap_options = &#39;striped&#39;, full_width = T)</span></span></code></pre></div>
 </details>
 <table>
 <caption>
@@ -613,9 +623,9 @@ chl_a
 <div id="final-decision" class="section level2 hasAnchor" number="3.2">
 <h2><span class="header-section-number">3.2</span> Final Decision<a href="data-quality-assessments.html#final-decision" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <ul>
-<li>Based on the above approaches and logic, the chl-a to biomass multiplier does
-not impact model performance very much. As such, we are going to use the 234 log
-ratio going forward.</li>
+<li>Based on the above approaches and logic, the chl-a to biomass multiplier
+does not impact model performance very much. As such, we are going to use
+the 234 log ratio going forward.</li>
 </ul>
 
 </div>
@@ -625,7 +635,7 @@ ratio going forward.</li>
           </div>
         </div>
       </div>
-<a href="download-and-join.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="download-and-merge-aquasat-data.html" class="navigation navigation-prev navigation-unique" aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 
     </div>
   </div>
