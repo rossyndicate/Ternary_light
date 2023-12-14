@@ -16,7 +16,9 @@ editor_options:
     wrap: 80
 ---
 
-# Motivation and Introduction {.unnumbered}
+# (PART) Motivation and Introduction {.unnumbered}
+
+# Introduction 
 
 Water clarity and its components (chlorophyll *a*, total suspended sediment
 (TSS), and dissolved organic carbon (DOC)) are among the most functionally

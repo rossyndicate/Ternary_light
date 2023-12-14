@@ -23,6 +23,8 @@ library(ggthemes)
 library(knitr)
 library(tidyverse)
 
+data_out_dir = "../data/out"
+
 opts_chunk$set(warning = F, message = F)
 ```
 
@@ -88,9 +90,9 @@ of ranges.
 
 ```{r data-nap-test}
 
-in_vis <- read_feather('data/out/simul.feather')
+in_vis <- read_feather(file.path(data_out_dir, 'simul.feather'))
 
-no_sech <- read_feather('data/out/no_secchi.feather')
+no_sech <- read_feather(file.path(data_out_dir, 'no_secchi.feather'))
 
 range <- c(50, 100, 200, 234)
 
@@ -199,7 +201,8 @@ nap_est_no_secchi <- nap_test %>%
 
 
 write_feather(nap_est_no_secchi %>%
-                filter(chl_ratio == 234),'data/out/no_secchi_clean.feather')
+                filter(chl_ratio == 234),
+              file.path(data_out_dir, 'no_secchi_clean.feather'))
 
 
 
@@ -296,7 +299,7 @@ kable(nap_slopes) %>%
 ```
 
 
-# Final Decision
+## Final Decision
 
 - Based on the above approaches and logic, the chl-a to biomass multiplier does 
 not impact model performance very much. As such, we are going to use the 234 log 

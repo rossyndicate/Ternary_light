@@ -10,3 +10,7 @@ data
 ## pesky .DS_Store
 **.DS_Store
 
+## bookdown artifacts
+src/Ternary-Light-Partitioning_cache/
+src/Ternary-Light-Partitioning_files/
+docs/Ternary-Light-Partitioning_files/
