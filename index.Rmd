@@ -22,17 +22,19 @@ Water clarity and its components (chlorophyll *a*, total suspended sediment
 (TSS), and dissolved organic carbon (DOC)) are among the most functionally
 important and socially-relevant aspects of water quality. Here we propose a
 method for systematically evaluating the relative contribution of each water
-clarity component to total clarity, a value derived from Secchi disk depth. We
-further borrow a visualization tool from soil analyses, the ternary diagram. We
-build ternary diagrams that partition light partitioning between DOC, derived
-algal biomass, and derived non-algal particles.
+clarity component to total clarity [[water column light extinction?]], a value
+derived from Secchi disk depth. We further borrow a visualization tool from soil
+analyses, the ternary diagram to describe these contributions: we build ternary
+diagrams that partition light partitioning between DOC mass, derived algal
+biomass, and derived non-algal mass.
 
 [[add conceptual ternary diagram]]
 
 ## Workflow
 
 [[is it intentional to use particle and mass/biomass interchangably? Consider a
-high-level consolidation of language in this and above section.]]
+high-level consolidation of language below, I changed the above text to be
+mass/biomass.]]
 
 In its simplest form our workflow contains the following steps:
 
