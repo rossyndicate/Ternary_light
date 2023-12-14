@@ -1,4 +1,12 @@
+## R objects
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+
+## data folder
+data
+
+## pesky .DS_Store
+**.DS_Store
+
