@@ -183,7 +183,7 @@ ggplot(., aes(chl_a,tss_dead,color = type)) +
 
 </details>
 
-```{r, echo = F, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
+```{r, echo = F, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
 
 tss_dead_chla
 
@@ -277,7 +277,7 @@ kd_obs_pred <- nap_resid %>%
 
 </details>
 
-```{r fig kd-pred-obs, echo = F, cache = T, fig.cap = 'Modelled light extinction coefficient (Kd) versus observed, red line is 1:1 line and blue is line of best fit, r^2 hardly varies between chlorophyll a conversion approaches.'}
+```{r fig kd-pred-obs, echo = F, fig.cap = 'Modelled light extinction coefficient (Kd) versus observed, red line is 1:1 line and blue is line of best fit, r^2 hardly varies between chlorophyll a conversion approaches.'}
 
 kd_obs_pred
 

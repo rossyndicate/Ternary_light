@@ -22,11 +22,10 @@ library(tidyverse)
 
 # Download and Merge Aquasat data
 
-Note that some chunks have been set to `eval = FALSE`, so they won't run unless
-you manually run it. That way this book can run in reasonable timeframes on
-computers that don't have a lot of memory or a fast download speed, and some
-other chunks will run based on "caching." These chunks will be flagged
-explicitly, and all their data products saved to a `data/out` folder.
+[[I've removed all `eval=F` and `cache=T` so that the .html will open and show
+all figs correctly. My download of files didn't take more than a few minutes, so
+I'm not sure if that's an internet thing? Or maybe because my machine is
+relatively fast? I'm happy to put back in on next round.]]
 
 ## AquaSat download
 
@@ -213,7 +212,7 @@ simul_map
 
 <summary>Code to create scatter plot matrix figure.</summary>
 
-```{r four-vars-scatter, cache = T}
+```{r four-vars-scatter}
 log_simul <- simul_vis %>%
   mutate(across(c(secchi,chl_a,tss,doc,tis), log10)) %>%
   filter(if_all(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
