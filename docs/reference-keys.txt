@@ -1,5 +1,6 @@
+tab:neg-tss-dead
 fig:fig-tss-dead-chla
-fig:fig-kd-obs-pred
+tab:pre-tab-nap-slope
 introduction
 workflow
 download-and-join

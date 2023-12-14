@@ -1,5 +1,7 @@
 ---
-output: html_document
+output: 
+  html_document:
+    fig_caption: true
 editor_options: 
   chunk_output_type: console
   markdown:
@@ -7,8 +9,6 @@ editor_options:
 ---
 
 # Data quality assessments
-
-Note, also eval = F to save computation time
 
 ```{r load-pkgs-ch2, include = F}
 library(sf)
@@ -28,65 +28,71 @@ data_out_dir = "../data/out"
 opts_chunk$set(warning = F, message = F)
 ```
 
-
 ## Chl-a to biomass
 
 While it is more common in coastal and oceanic research, inland water scientists
-rarely measure water clarity constituents in the way that is most directly 
-transferable to our research question. Ideally we would routinely measure concentrations of
-algae biomass, non-algal particles
-(including inorganic sediment and organic sediment, I like to call this
-stuff dead suspended sediment, but I guess NAP is fine), and dissolved organic 
-carbon. These constituents all alter light penetration in water, but they are 
-mutually exclusive groups with no measurement overlap between algal particles and NAP
-for example. However, this is not what we usually measure. Instead, we have rich 
-datasets of things that could indicate our desired constituents. These map as basically.
+rarely measure water clarity constituents in the way that is most directly
+transferable to our research question. Ideally we would routinely measure
+concentrations of algal biomass, non-algal particles (including inorganic
+sediment and organic sediment, I like to call this stuff dead suspended
+sediment, but I guess NAP is fine), and dissolved organic carbon. These
+constituents all alter light penetration in water, but they are mutually
+exclusive groups with no measurement overlap between algal particles and NAP for
+example. However, this is not what we usually measure. Instead, we have rich
+datasets of things that could indicate our desired constituents. These map as
+basically.
 
-- Chlorophyll-a -> proxy for algae biomass.
-- Total suspended solids (tss) -> All suspended solids, subtract algae biomass = NAP
-- DOC -> DOC!
+-   Chlorophyll *a* -\> proxy for algal biomass
+-   Total suspended solids (TSS) -\> All suspended solids, subtract algal
+    biomass ≅ NAP
+-   DOC -\> DOC!
 
-That means we have to basically do one key calculation. Convert chl-a to biomass.
-Then subtract that from tss and assume that is NAP. While this is a absurdly
-simple calculation it is filled with dangers. The relationship between chl-a
-and algae biomass depends on temperature and nutrients and species and is 
-[not universal](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016GB005458).
-Most studies focus on Chl:C ratios, but we are interested in Chl:Biomass ratio,
-for which there are much fewer studies, though some studies below suggest 
-a range of 0.005 to 0.1 Chl:biomass. (I need to find the C:Biomass study I used
-forever ago.)
+That means we have to basically do one key calculation. Convert chlorohpyll *a*
+to biomass. Then subtract that from TSS and assume that is NAP. While this is a
+absurdly simple calculation it is filled with dangers. The relationship between
+chlorphyll *a* and algal biomass depends on temperature and nutrients and
+species and is [not
+universal](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016GB005458).
+Most studies focus on chlorohpyll:carbon ratios, but we are interested in
+chlorophyll:biomass ratio, for which there are much fewer studies, though some
+studies below suggest a range of 0.005 to 0.1 chlorophyll:biomass. (I need to
+find the C:Biomass study I used forever ago.)
 
 Papers that help:
 
-  - https://aslopubs.onlinelibrary.wiley.com/doi/full/10.1002/lno.10338
+-   <https://aslopubs.onlinelibrary.wiley.com/doi/full/10.1002/lno.10338>
 
-  - https://pubs.usgs.gov/twri/twri9a7/twri9a7_7.4.pdf
+-   <https://pubs.usgs.gov/twri/twri9a7/twri9a7_7.4.pdf>
 
-  - https://www.researchgate.net/publication/230056019_Relationship_between_Chlorophyll-a_Concentration_and_Phytoplankton_Biomass_in_Several_Reservoirs_in_Czechoslovakia/link/5cb56c164585156cd79af804/download
+-   <https://www.researchgate.net/publication/230056019_Relationship_between_Chlorophyll-a_Concentration_and_Phytoplankton_Biomass_in_Several_Reservoirs_in_Czechoslovakia/link/5cb56c164585156cd79af804/download>
 
-  - https://archimer.ifremer.fr/doc/2005/publication-1172.pdf
+-   <https://archimer.ifremer.fr/doc/2005/publication-1172.pdf>
 
 ### Approach
 
-Our philosphy here is that we will use chl-a directly as a proxy for algal biomass
-to minimize the number of transformations to this data, since we are primarily
-interested in how algae alters light attenuation, regardless of how we estimate algae.
-However, we still need to calculate Non-Algal Particle mass. For that we will
-use a range of values of Chl:biomass and show the impact of picking a variety 
-of ranges. 
+Our philosophy here is that we will use chlorophyll *a* directly as a proxy for
+algal biomass to minimize the number of transformations to this data, since we
+are primarily interested in how algae alters light attenuation, regardless of
+how we estimate algae. However, we still need to calculate non-algal particle
+(NAP) mass. For that we will use a range of values of chlorohpyll:biomass ratio
+and show the impact of picking a sinlge ratio from a set of ranges.
 
 *Caveats*
 
- - We don't have a true NAP to compare how accurate our approach is.
- 
- - We do have Inorganic Sediment, but that is not the same thing as non-algal 
- particles, since it excludes particulate organic carbon. Still, where
- we have it, we will examine the relationship between NAP and TIS (total 
- inorganic sediment). 
- 
- - Not entirely sure how we propogate this uncertainty downstream? Pick an average?
+-   We don't have a true NAP to compare how accurate our approach is.
 
+-   We do have Inorganic Sediment, but that is not the same thing as non-algal
+    particles, since it excludes particulate organic carbon. Still, where we
+    have it, we will examine the relationship between NAP and total inorganic
+    sediment (TIS)
 
+-   Not entirely sure how we propogate this uncertainty downstream? Pick an
+    average? [[run them all and then get sd/error metrics to describe
+    uncertainty]]
+
+<details>
+
+<summary>Code to apply varying algal biomass ratios.</summary>
 
 ```{r data-nap-test}
 
@@ -97,64 +103,69 @@ no_sech <- read_feather(file.path(data_out_dir, 'no_secchi.feather'))
 range <- c(50, 100, 200, 234)
 
 
-
 #Couldn't think of a more clever way to multiply
 #chl_a by the range of values, so just made
 # dataframe 4 times bigger with new column called ratio. 
-nap_test <- expand_grid(no_sech,chl_ratio = range) %>%
-  mutate(power = ifelse(chl_ratio == 234, 0.57, 1),
+nap_test <- expand_grid(no_sech, chl_ratio = range) %>%
+  mutate(power = if_else(chl_ratio == 234, 0.57, 1),
          chl_a_biomass = exp(log(chl_ratio/1000)+log(chl_a)*power),
          tss_dead = tss-chl_a_biomass)
-
-
 ```
+
+</details>
 
 ### Simple evaluations of conversion
 
-
-
-
 #### Negative tss_dead
 
-Probably the simplest way to see which ratios are more appropriate is to
-look at how that impacts how many tss_dead observations are negative (impossible).
+Probably the simplest way to see which ratios are more appropriate is to look at
+how that impacts how many tss_dead observations are negative, which is
+impossible.
+
+<details>
+
+<summary>Code for table.</summary>
 
 ```{r neg-tss-dead}
 
-
-
-nap_test %>%
+neg_tss_dead <- nap_test %>%
   mutate(negative = ifelse(tss_dead < 0, 'negative', 'positive')) %>%
   group_by(negative,chl_ratio) %>%
   count() %>%
   pivot_wider(names_from = 'negative',values_from = 'n')  %>%
   mutate(percent_neg = negative/(positive+negative)*100) %>%
-  kable()
+  kable(caption = "Varying chlorohpyll ratios and summary of negative tss_dead results.")
 
 ```
 
+</details>
 
-Well, that sort of produces obvious results. Smaller ratios mean, less negative 
+```{r fig-neg-tss-dead, echo=FALSE}
+neg_tss_dead
+```
+
+Well, that sort of produces obvious results. Smaller ratios mean, less negative
 NAP estimates, but there is a big increase between 100-200, making me think the
-"correct" ratio may be in there somewhere. 
+"correct" ratio may be in there somewhere.
 
+#### Relationship between chlorophyll-a and tss_dead
 
-#### Relationship between chl-a and tss_dead
+If you recall from the previous section, there was a linear relationship between
+chlorophyll *a* and TSS across all sites and water types (r^2^ \> 0.35). One
+effect we'd expect to see with the tss_dead estimate is that this relationship
+should decay. While there are reasons for chlorophyll *a* to be correlated with
+TSS (sediment brings nutrients for example), chlorophyll *a* also includes algal
+cells which are suspended particles themselves. If this approach worked well, we
+should see weaker relationships between tss_dead and chlorophyll *a*.
 
-If you recall from the previous section, there was a strong linear 
-relationship between chl-a and tss across all sites and water types (r2 > 0.35).
-One effect we'd expect to see with the tss_dead estimate is that this relationship
-should decay. While there are reasons for chl-a to be correlated with tss (sediment
-brings nutrients for example), chl-a also includes algal cells which are suspended
-particles themselves. If this approach worked well, we should see weaker relationships
-between tss_dead and chl-a
+<details>
 
+<summary>Code for figure.</summary>
 
-```{r fig-tss-dead-chla, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
-
+```{r fig-tss-dead-chla}
 
 #Subset for plotting purposes
-nap_test %>%
+tss_dead_chla <- nap_test %>%
   #Remove negatives and very small numbers (ug/L of sediment is basically zero)
   filter(tss_dead > 0.001) %>%
   sample_frac(0.1) %>%
@@ -163,33 +174,45 @@ ggplot(., aes(chl_a,tss_dead,color = type)) +
   geom_point() + 
   scale_x_log10() + 
   scale_y_log10() + 
-  stat_poly_eq() + 
+  stat_poly_eq(small.r = T) + 
   theme_few() + 
   scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown')) 
 
 ```
 
+</details>
 
-- What to do with this? 
-- 234*chl^0.57 seems logical but still high correlation in lakes between tss/chl_a,
-but that may be a real thing for lakes? (corr is actually higher with this approach)
+```{r, echo = F, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
 
+tss_dead_chla
 
+```
+
+-   What to do with this?
+-   234\*chl^0.57^ seems logical but still high correlation in lakes between
+    tss/chl_a, but that may be a real thing for lakes? (corr is actually higher
+    with this approach)
 
 ### Light attenuation model exploration
 
 Model assumptions
 
-- Not searching for intercept assuming observed 0.15 coefficient for intercept (pure water attenuation)
+-   Not searching for intercept assuming observed 0.15 coefficient for intercept
+    (pure water attenuation)
 
-- For now, not doing the middle 2.5-97.5% of data, can add back in.
+-   For now, not doing the middle 2.5-97.5% of data, can add back in.
 
-- Normality assumptions aren't fully met
+-   Normality assumptions aren't fully met
 
+<details>
 
+<summary>Code for this section.</summary>
 
-```{r fig-kd-obs-pred, warning = F, cache = T, fig.cap = 'modelled light extinction coefficient versus observed, red line is 1:1 line and blue is line of best fit, R2 hardly varies between chl-a conversion approaches.'}
+[[noting that kd here is 1/secchi, which is yet a different constant for
+calculating kd, also for the derp in the class (me) please give insight on the
+1/1.5/max secchi as kw.]]
 
+```{r fig-kd-obs-pred, warning = F}
 
 nap_est_no_secchi <- nap_test %>%
   ungroup() %>%
@@ -198,27 +221,19 @@ nap_est_no_secchi <- nap_test %>%
   mutate(secchi = ifelse(secchi < 0.1,0.1,secchi),
         kd = (1/(secchi)))
 
-
-
 write_feather(nap_est_no_secchi %>%
                 filter(chl_ratio == 234),
               file.path(data_out_dir, 'no_secchi_clean.feather'))
-
-
 
 nap_est <- nap_est_no_secchi %>%
   filter(!is.na(secchi))
 
 
-
-
 k_w <- 1/1.5/max(nap_est$secchi)
-
 
 kd_mod <- function(df){
   mod <- lm((kd-k_w)  ~ 0 + tss_dead + doc + chl_a, data = df)
 }
-
 
 kd_resid_extract <- function(df,mod){
   df <- df %>%
@@ -229,31 +244,27 @@ kd_resid_extract <- function(df,mod){
 # nap_est <- nap_est %>%
 #   filter(SiteID %in% fine_sites$SiteID) 
 
-
 nap_mods <- group_by(nap_est,chl_ratio) %>%
   nest() %>%
-  mutate(mods = map(data,kd_mod),
+  mutate(mods = map(data, kd_mod),
          data = map2(data, mods, kd_resid_extract))
 
 mod234 <- nap_mods %>%
   filter(chl_ratio == 234)
 
-
-
 nap_resid <- nap_mods %>%
   select(-mods) %>%
   unnest(data) %>%
-  mutate(ratio_rmse = paste('ratio =',chl_ratio,', R2 =', round(cor(pred,kd)^2,2)),
+  mutate(ratio_rmse = paste('ratio =',chl_ratio,', r^2 =', round(cor(pred,kd)^2,2)),
          year = year(date_unity))
 
-
-nap_resid %>%
+kd_obs_pred <- nap_resid %>%
   sample_frac(0.2) %>%
   ggplot(., aes(kd,pred, color = year(date_unity))) + 
   geom_point(shape = 1) + 
   facet_wrap(~ratio_rmse) + 
   theme_few() + 
-  xlab('kd (1/secchi)') +
+  xlab('kd (1/secchi)') + #tagging this too, as the constant of 1.
   ylab('predicted kd') +
   scale_x_log10() + 
   scale_y_log10() +
@@ -261,49 +272,52 @@ nap_resid %>%
   stat_smooth(method = 'lm',se = F, color = 'black') +
   geom_abline(intercept = 0, slope = 1, col = 'red') 
 
+```
 
+</details>
 
+```{r fig kd-pred-obs, echo = F, cache = T, fig.cap = 'Modelled light extinction coefficient (Kd) versus observed, red line is 1:1 line and blue is line of best fit, r^2 hardly varies between chlorophyll a conversion approaches.'}
 
+kd_obs_pred
 
 ```
 
-
-
-
-
 ### Variation in slopes w/ different chl biomass ratios
 
-- Do all our painstaking decisions make a difference for model slopes?
+-   Do all our painstaking decisions make a difference for model slopes?
 
-- (They didn't impact model RMSE very much)
+-   (They didn't impact model RMSE very much)
 
-- No, they don't change slopes all that much either. 
+-   No, they don't change slopes all that much either.
 
+<details>
 
+<summary>Code for table.</summary>
 
-```{r tab-nap-slope}
+```{r pre-tab-nap-slope}
 
 nap_slopes <- nap_mods %>%
   select(-data) %>%
   mutate(glance = map(mods, tidy)) %>%
   unnest(glance) %>%
   select(-mods,-std.error,-statistic) %>%
-  pivot_wider(names_from = 'term', values_from = 'estimate')
+  pivot_wider(names_from = 'term', values_from = 'estimate') %>% 
+  kable(caption = "Varying chlorophyll ratios and summary of slopes across parameters.")
 
-
-
-kable(nap_slopes) %>%
-  kable_paper() %>%
-  scroll_box(width = '100%', height = '600px') %>%
-  kable_styling(bootstrap_options = 'striped', full_width = )
+# kable(nap_slopes) %>%
+#   kable_paper() %>%
+#   scroll_box(width = '100%', height = '600px') %>%
+#   kable_styling(bootstrap_options = 'striped', full_width = T)
 ```
 
+</details>
+
+```{r tab-nap-slope, echo=F}
+nap_slopes
+```
 
 ## Final Decision
 
-- Based on the above approaches and logic, the chl-a to biomass multiplier does 
-not impact model performance very much. As such, we are going to use the 234 log 
-ratio going forward. 
-
-
-
+-   Based on the above approaches and logic, the chl-a to biomass multiplier
+    does not impact model performance very much. As such, we are going to use
+    the 234 log ratio going forward.

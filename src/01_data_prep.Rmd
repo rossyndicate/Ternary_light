@@ -1,5 +1,7 @@
 ---
-output: html_document
+output: 
+  html_document:
+    fig_caption: true
 editor_options: 
   chunk_output_type: console
   markdown:
@@ -38,7 +40,9 @@ The URLs are just from the AquaSat collection links.
 
 ```{r download-data}
 # check to see if the data have been downloaded. we assume that if the directory exists, data have been downloaded.
+
 download_dir <- "../data/in/"
+
 if(!dir.exists(download_dir)) {
   # if it doesn't, make the folder and download AquaSat files
   dir.create(download_dir, recursive = TRUE)
@@ -79,7 +83,9 @@ if(!dir.exists(download_dir)) {
 out for rendering purposes]]
 
 ```{r read-join-aquasat}
+
 data_out_dir <- "../data/out/"
+
 # this chunk only needs to be run if the out directory doesn't exist
 if(!dir.exists(data_out_dir)) {
   # grab monitoring location identifier (SiteID/MonitorongLocationIdentifier) and
@@ -179,7 +185,7 @@ mapview(unique_simul, zcol = 'type')
 
 ```{r fig-four-vars-scatter, cache = T}
 log_simul <- simul_vis %>%
-  mutate(across(c(secchi,chl_a,tss,doc,tis),log10)) %>%
+  mutate(across(c(secchi,chl_a,tss,doc,tis), log10)) %>%
   filter(if_all(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
 
 log_simul %>%
