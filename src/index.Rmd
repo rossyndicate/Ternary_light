@@ -32,7 +32,7 @@ biomass, and derived non-algal mass.
 
 ## Workflow
 
-[[is it intentional to use particle and mass/biomass interchangably? Consider a
+[[is it intentional to use particle and mass/biomass interchangeably? Consider a
 high-level consolidation of language below, I changed the above text to be
 mass/biomass.]]
 
@@ -69,3 +69,25 @@ In its simplest form our workflow contains the following steps:
 
 6.  Explore systematic controls on relative contribution to light extinction
     over space and time across CONUS.
+    
+    
+```{r setup, include=FALSE}
+# this code block checks for the packages used in this workflow, and installs 
+# them if they are not installed on your machine.
+
+package_installer <- function(x) {
+  if (x %in% installed.packages()) {
+    print(paste0('{', x ,'} package is already installed.'))
+  } else {
+    install.packages(x)
+    print(paste0('{', x ,'} package has been installed.'))
+  }
+}
+
+packages = c("tidyverse", "sf", "feather", "GGally", 
+             "mapview", "bookdown", "ggthemes", "ggpmisc",
+             "Metrics", "kableExtra", "broom")
+
+lapply(packages, package_installer)
+```
+

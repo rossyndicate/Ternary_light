@@ -2,28 +2,28 @@
 output: html_document
 editor_options: 
   chunk_output_type: console
+  markdown:
+    wrap: 80
 ---
-
-
 
 # Data quality assessments
 
 Note, also eval = F to save computation time
 
-```{r, include = F}
-
-library(tidyverse)
+```{r load-pkgs-ch2, include = F}
 library(sf)
 library(feather)
 library(GGally)
 library(mapview)
 library(ggpmisc)
-library(lubridate)
 library(Metrics)
 library(kableExtra)
 library(broom)
+library(ggthemes)
+library(knitr)
+library(tidyverse)
 
-knitr::opts_chunk$set(warning = F, message = F)
+opts_chunk$set(warning = F, message = F)
 ```
 
 
@@ -86,7 +86,7 @@ of ranges.
 
 
 
-```{r}
+```{r data-nap-test}
 
 in_vis <- read_feather('data/out/simul.feather')
 
@@ -117,7 +117,7 @@ nap_test <- expand_grid(no_sech,chl_ratio = range) %>%
 Probably the simplest way to see which ratios are more appropriate is to
 look at how that impacts how many tss_dead observations are negative (impossible).
 
-```{r}
+```{r neg-tss-dead}
 
 
 
@@ -127,7 +127,7 @@ nap_test %>%
   count() %>%
   pivot_wider(names_from = 'negative',values_from = 'n')  %>%
   mutate(percent_neg = negative/(positive+negative)*100) %>%
-  knitr::kable()
+  kable()
 
 ```
 
@@ -148,7 +148,7 @@ particles themselves. If this approach worked well, we should see weaker relatio
 between tss_dead and chl-a
 
 
-```{r, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
+```{r fig-tss-dead-chla, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
 
 
 #Subset for plotting purposes
@@ -162,7 +162,7 @@ ggplot(., aes(chl_a,tss_dead,color = type)) +
   scale_x_log10() + 
   scale_y_log10() + 
   stat_poly_eq() + 
-  ggthemes::theme_few() + 
+  theme_few() + 
   scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown')) 
 
 ```
@@ -186,7 +186,7 @@ Model assumptions
 
 
 
-```{r, warning = F, cache = T, fig.cap = 'modelled light extinction coefficient versus observed, red line is 1:1 line and blue is line of best fit, R2 hardly varies between chl-a conversion approaches.'}
+```{r fig-kd-obs-pred, warning = F, cache = T, fig.cap = 'modelled light extinction coefficient versus observed, red line is 1:1 line and blue is line of best fit, R2 hardly varies between chl-a conversion approaches.'}
 
 
 nap_est_no_secchi <- nap_test %>%
@@ -233,12 +233,12 @@ nap_mods <- group_by(nap_est,chl_ratio) %>%
          data = map2(data, mods, kd_resid_extract))
 
 mod234 <- nap_mods %>%
-  dplyr::filter(chl_ratio == 234)
+  filter(chl_ratio == 234)
 
 
 
 nap_resid <- nap_mods %>%
-  dplyr::select(-mods) %>%
+  select(-mods) %>%
   unnest(data) %>%
   mutate(ratio_rmse = paste('ratio =',chl_ratio,', R2 =', round(cor(pred,kd)^2,2)),
          year = year(date_unity))
@@ -249,7 +249,7 @@ nap_resid %>%
   ggplot(., aes(kd,pred, color = year(date_unity))) + 
   geom_point(shape = 1) + 
   facet_wrap(~ratio_rmse) + 
-  ggthemes::theme_few() + 
+  theme_few() + 
   xlab('kd (1/secchi)') +
   ylab('predicted kd') +
   scale_x_log10() + 
@@ -278,7 +278,7 @@ nap_resid %>%
 
 
 
-```{r}
+```{r tab-nap-slope}
 
 nap_slopes <- nap_mods %>%
   select(-data) %>%
@@ -289,7 +289,7 @@ nap_slopes <- nap_mods %>%
 
 
 
-knitr::kable(nap_slopes) %>%
+kable(nap_slopes) %>%
   kable_paper() %>%
   scroll_box(width = '100%', height = '600px') %>%
   kable_styling(bootstrap_options = 'striped', full_width = )

@@ -1,0 +1,613 @@
+---
+title: "Ternary Light Partitioning"
+author:
+  - "Dr. Matthew Ross"
+  - 'Dr. Jim Jawitz'
+  - 'Dr. Matt Cohen'
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+site: bookdown::bookdown_site
+documentclass: book
+output:
+  bookdown::gitbook: default
+  #bookdown::pdf_book: default
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: 80
+---
+
+# Motivation and Introduction {.unnumbered}
+
+Water clarity and its components (chlorophyll *a*, total suspended sediment
+(TSS), and dissolved organic carbon (DOC)) are among the most functionally
+important and socially-relevant aspects of water quality. Here we propose a
+method for systematically evaluating the relative contribution of each water
+clarity component to total clarity [[water column light extinction?]], a value
+derived from Secchi disk depth. We further borrow a visualization tool from soil
+analyses, the ternary diagram to describe these contributions: we build ternary
+diagrams that partition light partitioning between DOC mass, derived algal
+biomass, and derived non-algal mass.
+
+[[add conceptual ternary diagram]]
+
+## Workflow
+
+[[is it intentional to use particle and mass/biomass interchangeably? Consider a
+high-level consolidation of language below, I changed the above text to be
+mass/biomass.]]
+
+In its simplest form our workflow contains the following steps:
+
+1.  Download all of [AquaSat](https://figshare.com/collections/AquaSat/4506140),
+    a data set of four water quality parameters collated for the conterminous
+    United States, and join the AquaSat pieces together to create a harmonized
+    data set of the four parameters.
+
+2.  Investigate the relationship between chlorohpyll *a*, TIS (inorganic
+    sediment, derived from TSS), algal biomass (derived from chlorophyll *a*)
+    and non-algal particles (derived from algal biomass and DOC). Create a
+    dataset of algal biomass, non-algal particle mass, and dissolved organic
+    carbon mass.
+
+3.  Investigate data quality of AquaSat and select a subset of data where
+    chlorophyll *a*, DOC, TSS and Secchi and create a dataset where all
+    parameters were all measured simultaneously.
+
+4.  Build a model that predicts light extinction using algal biomass, non-algal
+    particles, and DOC where light extinction (K) is defined as:
+
+    $$
+    K = 1.4 / {Sechhi\:Disk\:Depth}
+    $$
+
+    [[note, the value I've seen for the constant is 1.7 (see Poole and Atkins
+    1929), maybe cite here the associated paper for use of 1.4?]]
+
+5.  Use this model to extract light extinction coefficients relative to each
+    parameter (algal biomass, non-algal mass, DOC mass) and apply this model to
+    visualizations in ternary space.
+
+6.  Explore systematic controls on relative contribution to light extinction
+    over space and time across CONUS.
+    
+    
+```{r setup, include=FALSE}
+# this code block checks for the packages used in this workflow, and installs 
+# them if they are not installed on your machine.
+
+package_installer <- function(x) {
+  if (x %in% installed.packages()) {
+    print(paste0('{', x ,'} package is already installed.'))
+  } else {
+    install.packages(x)
+    print(paste0('{', x ,'} package has been installed.'))
+  }
+}
+
+packages = c("tidyverse", "sf", "feather", "GGally", 
+             "mapview", "bookdown", "ggthemes", "ggpmisc",
+             "Metrics", "kableExtra", "broom")
+
+lapply(packages, package_installer)
+```
+
+
+<!--chapter:end:index.Rmd-->
+
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+  markdown:
+    wrap: 80
+---
+
+
+# (PART) Data downloads and decisions {-}
+
+```{r library-ch1, include=FALSE}
+library(sf)
+library(feather)
+library(GGally)
+library(mapview)
+library(ggthemes)
+library(tidyverse)
+```
+
+
+# Download and Join
+
+
+I recognize that I should probably just use `targets` for this part, but...
+I (Matt Ross) don't know how to use targets yet! So, instead we are just
+going to have several code chunks here that just downloads all the data directly
+from figshare, preps data for analysis, etc...
+and the chunks will just be set to `eval = FALSE`, so they won't
+run unless you manually run it. That way this book can run in reasonable timeframes,
+most other chunks will run based on "caching." Though, some data intensive tasks,
+will also simply have `eval = F` to save runtime. These chunks will be flagged
+explicitly, and all their data products saved to a `data/out` folder. 
+
+## AquaSat download
+
+AquaSat is held in a figshare collection with many pieces. For this work we
+will need most of the data held there, which we will access through direct download.
+The URLs are just from the AquaSat collection links.
+
+```{r download-data, eval = F}
+## AquaSat Download data. This takes > 2 hours,
+## so only run if you think 
+## AquaSat has been updated!
+
+## Also
+
+## In-situ raw data with methods
+download.file('https://figshare.com/ndownloader/files/15475154',
+              mode = 'wb',# Needs to be written in binary for some reason 
+              destfile = 'data/in/aq_situ.zip')
+unzip('data/in/aq_situ.zip',exdir = 'data/in/aq_situ')
+
+
+# Site Inventory with type, because it's not in the other inventory
+# Stupid aquasat developer (me/mattross!)
+download.file('https://figshare.com/ndownloader/files/24720434',
+              mode = 'wb',
+              destfile = 'data/in/inv.feather')
+
+
+## Unique site inventory 
+
+download.file('https://figshare.com/ndownloader/files/24720437',
+              mode = 'wb',
+              destfile = 'data/in/unq_site.feather')
+
+## Ecoregion data
+download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l2.zip', destfile = 'data/in/eco2.zip')
+
+unzip('data/in/eco2.zip',exdir = 'data/in/ecoregion')
+
+
+```
+
+## AquaSat Read and join. 
+
+Note, also eval = F to save computation time
+
+```{r read-join-aquasat, eval = F}
+
+
+# This is only useful because it has type (lake/stream/etc...)
+inv_type <- read_feather('data/in/inv.feather') %>%
+    select(SiteID = MonitoringLocationIdentifier,
+         type = ResolvedMonitoringLocationTypeName) %>%
+  mutate(type = ifelse(grepl('Lake',type),'Lake',type))
+
+
+#Real inventory
+site.vis <- read_feather('data/in/unq_site.feather') %>%
+  inner_join(inv_type) %>%
+  distinct(SiteID,lat,long,type)
+
+
+
+# Complete in-situ data, 6.5 million records. 
+in.vis <- read_csv('data/in/aq_situ/in-situ/wqp_lagos_unity.csv') 
+
+# Get clouds and path row sites
+
+clouds <- read_feather('data/in/clouds.feather') %>%
+  mutate(date = as.Date(SENSING_TIME)) %>%
+  select(PATH = WRS_PATH, 
+         ROW = WRS_ROW,
+         clouds = CLOUD_COVER,
+         date)
+
+
+site_path_row <- site.vis %>%
+  st_as_sf(.,coords = c('long','lat'), crs = 4326) %>%
+  st_join(.,st_read('data/in/wrs/WRS2_descending.shp')) %>%
+  select(SiteID, PATH, ROW) %>%
+  as_tibble(.) %>%
+  select(-geometry)
+
+```
+
+## Data Eval and Subset
+
+
+### Selecting only simultaneous observations
+
+I think the code mostly speaks for itself here
+```{r simultaneous, eval = F}
+# Only bother with data that has complete simultaneous observations of
+# chl_a, doc, etc...
+
+simul_vis <- in.vis %>%
+  select(-p_sand) %>%
+  filter(if_all(c(chl_a,doc,tss,secchi), ~!is.na(.))) %>% 
+  inner_join(site.vis) %>%
+  filter(type != 'Facility') %>%
+  #Set some reasonable thresholds, AquaSat is too generous
+  filter(secchi < 15,
+         chl_a < 1000,## ug/L
+         tss < 1000, ## mg/L
+         doc < 50)
+
+no_secchi <- in.vis %>%
+  select(-p_sand) %>%
+  filter(across(c(chl_a,doc,tss), ~!is.na(.))) %>% 
+  inner_join(site.vis) %>%
+  filter(type != 'Facility') %>%
+  #Set some reasonable thresholds, AquaSat is too generous
+  filter(
+         chl_a < 1000,## ug/L
+         tss < 1000, ## mg/L
+         doc < 50)
+
+# For speed
+write_feather(simul_vis, 'data/out/simul.feather')
+#For reproducibility
+write_csv(simul_vis, 'data/out/simul.csv')
+
+#For speed
+write_feather(no_secchi, 'data/out/no_secchi.feather')
+
+
+
+```
+
+
+
+## Where are sites with simultaneous observations of clarity constituents? 
+
+
+```{r map-simultaneous}
+
+simul_vis <- read_csv('data/out/simul.csv')
+
+unique_simul <- simul_vis %>%
+  distinct(SiteID, lat, long, type) %>%
+  st_as_sf(.,coords = c('long','lat'), crs = 4326)
+
+mapviewOptions(fgb = FALSE) # remove flat geobuff which breaks display
+mapview(unique_simul, zcol = 'type')
+
+```
+
+
+## What is the general relationiship between variables in log log space
+
+```{r fig-four-vars-scatter, cache = T}
+
+
+log_simul <- simul_vis %>%
+  mutate(across(c(secchi,chl_a,tss,doc,tis),log10)) %>%
+  filter(across(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
+
+
+log_simul %>%
+  sample_frac(0.2) %>%
+  ungroup() %>%
+  select(secchi,chl_a,tss,doc,type) %>%
+  ggpairs(lower = list(continuous = wrap('points',shape = 1)),
+          diag = list(continuous = wrap('densityDiag', alpha = 0.5)),
+         mapping = ggplot2::aes(color = type),
+         columns = c('secchi','chl_a','tss','doc')) +
+  theme_few() + 
+  scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown'))
+
+```
+
+
+
+<!--chapter:end:01_data_prep.Rmd-->
+
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+  markdown:
+    wrap: 80
+---
+
+# Data quality assessments
+
+Note, also eval = F to save computation time
+
+```{r load-pkgs-ch2, include = F}
+library(sf)
+library(feather)
+library(GGally)
+library(mapview)
+library(ggpmisc)
+library(Metrics)
+library(kableExtra)
+library(broom)
+library(ggthemes)
+library(knitr)
+library(tidyverse)
+
+opts_chunk$set(warning = F, message = F)
+```
+
+
+## Chl-a to biomass
+
+While it is more common in coastal and oceanic research, inland water scientists
+rarely measure water clarity constituents in the way that is most directly 
+transferable to our research question. Ideally we would routinely measure concentrations of
+algae biomass, non-algal particles
+(including inorganic sediment and organic sediment, I like to call this
+stuff dead suspended sediment, but I guess NAP is fine), and dissolved organic 
+carbon. These constituents all alter light penetration in water, but they are 
+mutually exclusive groups with no measurement overlap between algal particles and NAP
+for example. However, this is not what we usually measure. Instead, we have rich 
+datasets of things that could indicate our desired constituents. These map as basically.
+
+- Chlorophyll-a -> proxy for algae biomass.
+- Total suspended solids (tss) -> All suspended solids, subtract algae biomass = NAP
+- DOC -> DOC!
+
+That means we have to basically do one key calculation. Convert chl-a to biomass.
+Then subtract that from tss and assume that is NAP. While this is a absurdly
+simple calculation it is filled with dangers. The relationship between chl-a
+and algae biomass depends on temperature and nutrients and species and is 
+[not universal](https://agupubs.onlinelibrary.wiley.com/doi/full/10.1002/2016GB005458).
+Most studies focus on Chl:C ratios, but we are interested in Chl:Biomass ratio,
+for which there are much fewer studies, though some studies below suggest 
+a range of 0.005 to 0.1 Chl:biomass. (I need to find the C:Biomass study I used
+forever ago.)
+
+Papers that help:
+
+  - https://aslopubs.onlinelibrary.wiley.com/doi/full/10.1002/lno.10338
+
+  - https://pubs.usgs.gov/twri/twri9a7/twri9a7_7.4.pdf
+
+  - https://www.researchgate.net/publication/230056019_Relationship_between_Chlorophyll-a_Concentration_and_Phytoplankton_Biomass_in_Several_Reservoirs_in_Czechoslovakia/link/5cb56c164585156cd79af804/download
+
+  - https://archimer.ifremer.fr/doc/2005/publication-1172.pdf
+
+### Approach
+
+Our philosphy here is that we will use chl-a directly as a proxy for algal biomass
+to minimize the number of transformations to this data, since we are primarily
+interested in how algae alters light attenuation, regardless of how we estimate algae.
+However, we still need to calculate Non-Algal Particle mass. For that we will
+use a range of values of Chl:biomass and show the impact of picking a variety 
+of ranges. 
+
+*Caveats*
+
+ - We don't have a true NAP to compare how accurate our approach is.
+ 
+ - We do have Inorganic Sediment, but that is not the same thing as non-algal 
+ particles, since it excludes particulate organic carbon. Still, where
+ we have it, we will examine the relationship between NAP and TIS (total 
+ inorganic sediment). 
+ 
+ - Not entirely sure how we propogate this uncertainty downstream? Pick an average?
+
+
+
+```{r data-nap-test}
+
+in_vis <- read_feather('data/out/simul.feather')
+
+no_sech <- read_feather('data/out/no_secchi.feather')
+
+range <- c(50, 100, 200, 234)
+
+
+
+#Couldn't think of a more clever way to multiply
+#chl_a by the range of values, so just made
+# dataframe 4 times bigger with new column called ratio. 
+nap_test <- expand_grid(no_sech,chl_ratio = range) %>%
+  mutate(power = ifelse(chl_ratio == 234, 0.57, 1),
+         chl_a_biomass = exp(log(chl_ratio/1000)+log(chl_a)*power),
+         tss_dead = tss-chl_a_biomass)
+
+
+```
+
+### Simple evaluations of conversion
+
+
+
+
+#### Negative tss_dead
+
+Probably the simplest way to see which ratios are more appropriate is to
+look at how that impacts how many tss_dead observations are negative (impossible).
+
+```{r neg-tss-dead}
+
+
+
+nap_test %>%
+  mutate(negative = ifelse(tss_dead < 0, 'negative', 'positive')) %>%
+  group_by(negative,chl_ratio) %>%
+  count() %>%
+  pivot_wider(names_from = 'negative',values_from = 'n')  %>%
+  mutate(percent_neg = negative/(positive+negative)*100) %>%
+  kable()
+
+```
+
+
+Well, that sort of produces obvious results. Smaller ratios mean, less negative 
+NAP estimates, but there is a big increase between 100-200, making me think the
+"correct" ratio may be in there somewhere. 
+
+
+#### Relationship between chl-a and tss_dead
+
+If you recall from the previous section, there was a strong linear 
+relationship between chl-a and tss across all sites and water types (r2 > 0.35).
+One effect we'd expect to see with the tss_dead estimate is that this relationship
+should decay. While there are reasons for chl-a to be correlated with tss (sediment
+brings nutrients for example), chl-a also includes algal cells which are suspended
+particles themselves. If this approach worked well, we should see weaker relationships
+between tss_dead and chl-a
+
+
+```{r fig-tss-dead-chla, cache = T, fig.width = 7,fig.height = 7, fig.cap = "At low chl_ratios (10/20), there is really no change to the correlation between tss and chl_a, but at higher ratios (100/200), the relationship does breakdown some, though not completely"}
+
+
+#Subset for plotting purposes
+nap_test %>%
+  #Remove negatives and very small numbers (ug/L of sediment is basically zero)
+  filter(tss_dead > 0.001) %>%
+  sample_frac(0.1) %>%
+ggplot(., aes(chl_a,tss_dead,color = type)) +
+  facet_wrap(~chl_ratio) + 
+  geom_point() + 
+  scale_x_log10() + 
+  scale_y_log10() + 
+  stat_poly_eq() + 
+  theme_few() + 
+  scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown')) 
+
+```
+
+
+- What to do with this? 
+- 234*chl^0.57 seems logical but still high correlation in lakes between tss/chl_a,
+but that may be a real thing for lakes? (corr is actually higher with this approach)
+
+
+
+### Light attenuation model exploration
+
+Model assumptions
+
+- Not searching for intercept assuming observed 0.15 coefficient for intercept (pure water attenuation)
+
+- For now, not doing the middle 2.5-97.5% of data, can add back in.
+
+- Normality assumptions aren't fully met
+
+
+
+```{r fig-kd-obs-pred, warning = F, cache = T, fig.cap = 'modelled light extinction coefficient versus observed, red line is 1:1 line and blue is line of best fit, R2 hardly varies between chl-a conversion approaches.'}
+
+
+nap_est_no_secchi <- nap_test %>%
+  ungroup() %>%
+  filter(tss_dead > 0.01,
+         secchi < 15 | is.na(secchi)) %>%
+  mutate(secchi = ifelse(secchi < 0.1,0.1,secchi),
+        kd = (1/(secchi)))
+
+
+
+write_feather(nap_est_no_secchi %>%
+                filter(chl_ratio == 234),'data/out/no_secchi_clean.feather')
+
+
+
+nap_est <- nap_est_no_secchi %>%
+  filter(!is.na(secchi))
+
+
+
+
+k_w <- 1/1.5/max(nap_est$secchi)
+
+
+kd_mod <- function(df){
+  mod <- lm((kd-k_w)  ~ 0 + tss_dead + doc + chl_a, data = df)
+}
+
+
+kd_resid_extract <- function(df,mod){
+  df <- df %>%
+    mutate(residuals = mod$residuals,
+           pred = mod$fitted.values + k_w)
+}
+
+# nap_est <- nap_est %>%
+#   filter(SiteID %in% fine_sites$SiteID) 
+
+
+nap_mods <- group_by(nap_est,chl_ratio) %>%
+  nest() %>%
+  mutate(mods = map(data,kd_mod),
+         data = map2(data, mods, kd_resid_extract))
+
+mod234 <- nap_mods %>%
+  filter(chl_ratio == 234)
+
+
+
+nap_resid <- nap_mods %>%
+  select(-mods) %>%
+  unnest(data) %>%
+  mutate(ratio_rmse = paste('ratio =',chl_ratio,', R2 =', round(cor(pred,kd)^2,2)),
+         year = year(date_unity))
+
+
+nap_resid %>%
+  sample_frac(0.2) %>%
+  ggplot(., aes(kd,pred, color = year(date_unity))) + 
+  geom_point(shape = 1) + 
+  facet_wrap(~ratio_rmse) + 
+  theme_few() + 
+  xlab('kd (1/secchi)') +
+  ylab('predicted kd') +
+  scale_x_log10() + 
+  scale_y_log10() +
+  scale_color_viridis_c() + 
+  stat_smooth(method = 'lm',se = F, color = 'black') +
+  geom_abline(intercept = 0, slope = 1, col = 'red') 
+
+
+
+
+
+```
+
+
+
+
+
+### Variation in slopes w/ different chl biomass ratios
+
+- Do all our painstaking decisions make a difference for model slopes?
+
+- (They didn't impact model RMSE very much)
+
+- No, they don't change slopes all that much either. 
+
+
+
+```{r tab-nap-slope}
+
+nap_slopes <- nap_mods %>%
+  select(-data) %>%
+  mutate(glance = map(mods, tidy)) %>%
+  unnest(glance) %>%
+  select(-mods,-std.error,-statistic) %>%
+  pivot_wider(names_from = 'term', values_from = 'estimate')
+
+
+
+kable(nap_slopes) %>%
+  kable_paper() %>%
+  scroll_box(width = '100%', height = '600px') %>%
+  kable_styling(bootstrap_options = 'striped', full_width = )
+```
+
+
+# Final Decision
+
+- Based on the above approaches and logic, the chl-a to biomass multiplier does 
+not impact model performance very much. As such, we are going to use the 234 log 
+ratio going forward. 
+
+
+
+
+<!--chapter:end:02_data_qaqc.Rmd-->
+

@@ -2,10 +2,22 @@
 output: html_document
 editor_options: 
   chunk_output_type: console
+  markdown:
+    wrap: 80
 ---
 
 
 # (PART) Data downloads and decisions {-}
+
+```{r library-ch1, include=FALSE}
+library(sf)
+library(feather)
+library(GGally)
+library(mapview)
+library(ggthemes)
+library(tidyverse)
+```
+
 
 # Download and Join
 
@@ -26,7 +38,7 @@ AquaSat is held in a figshare collection with many pieces. For this work we
 will need most of the data held there, which we will access through direct download.
 The URLs are just from the AquaSat collection links.
 
-```{r, eval = F}
+```{r download-data, eval = F}
 ## AquaSat Download data. This takes > 2 hours,
 ## so only run if you think 
 ## AquaSat has been updated!
@@ -65,13 +77,8 @@ unzip('data/in/eco2.zip',exdir = 'data/in/ecoregion')
 
 Note, also eval = F to save computation time
 
-```{r, eval = F}
+```{r read-join-aquasat, eval = F}
 
-library(tidyverse)
-library(sf)
-library(feather)
-library(GGally)
-library(mapview)
 
 # This is only useful because it has type (lake/stream/etc...)
 inv_type <- read_feather('data/in/inv.feather') %>%
@@ -115,7 +122,7 @@ site_path_row <- site.vis %>%
 ### Selecting only simultaneous observations
 
 I think the code mostly speaks for itself here
-```{r, eval = F}
+```{r simultaneous, eval = F}
 # Only bother with data that has complete simultaneous observations of
 # chl_a, doc, etc...
 
@@ -158,7 +165,7 @@ write_feather(no_secchi, 'data/out/no_secchi.feather')
 ## Where are sites with simultaneous observations of clarity constituents? 
 
 
-```{r}
+```{r map-simultaneous}
 
 simul_vis <- read_csv('data/out/simul.csv')
 
@@ -174,12 +181,12 @@ mapview(unique_simul, zcol = 'type')
 
 ## What is the general relationiship between variables in log log space
 
-```{r, cache = T}
+```{r fig-four-vars-scatter, cache = T}
 
 
 log_simul <- simul_vis %>%
-  dplyr::mutate(across(c(secchi,chl_a,tss,doc,tis),log10)) %>%
-  dplyr::filter(across(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
+  mutate(across(c(secchi,chl_a,tss,doc,tis),log10)) %>%
+  filter(across(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
 
 
 log_simul %>%
@@ -190,7 +197,7 @@ log_simul %>%
           diag = list(continuous = wrap('densityDiag', alpha = 0.5)),
          mapping = ggplot2::aes(color = type),
          columns = c('secchi','chl_a','tss','doc')) +
-  ggthemes::theme_few() + 
+  theme_few() + 
   scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown'))
 
 ```
