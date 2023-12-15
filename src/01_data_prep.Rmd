@@ -40,7 +40,7 @@ The URLs are just from the AquaSat collection links.
 ```{r download-data}
 # check to see if the data have been downloaded. we assume that if the directory exists, data have been downloaded.
 
-download_dir <- "../data/in/"
+download_dir <- "data/in/"
 
 if(!dir.exists(download_dir)) {
   # if it doesn't, make the folder and download AquaSat files
@@ -89,7 +89,7 @@ out for rendering purposes]]
 
 ```{r read-join-aquasat}
 
-data_out_dir <- "../data/out/"
+data_out_dir <- "data/out/"
 
 # this chunk only needs to be run if the out directory doesn't exist
 if(!dir.exists(data_out_dir)) {

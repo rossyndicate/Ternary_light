@@ -25,7 +25,7 @@ library(tidyverse)
 
 opts_chunk$set(warning = F, message = F)
 
-data_out_dir <- "../data/out"
+data_out_dir <- "data/out"
 
 ```
 
