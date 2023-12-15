@@ -131,7 +131,7 @@ impossible.
 
 neg_tss_dead <- nap_test %>%
   mutate(negative = ifelse(tss_dead < 0, 'negative', 'positive')) %>%
-  group_by(negative,chl_ratio, power) %>%
+  group_by(negative, chl_ratio, power) %>%
   count() %>%
   pivot_wider(names_from = 'negative',values_from = 'n')  %>%
   mutate(percent_neg = negative/(positive+negative)*100) %>%
@@ -247,7 +247,7 @@ kd_resid_extract <- function(df,mod){
 # nap_est <- nap_est %>%
 #   filter(SiteID %in% fine_sites$SiteID) 
 
-nap_mods <- group_by(nap_est,chl_ratio) %>%
+nap_mods <- group_by(nap_est, chl_ratio, power) %>%
   nest() %>%
   mutate(mods = map(data, kd_mod),
          data = map2(data, mods, kd_resid_extract))
@@ -263,7 +263,7 @@ nap_resid <- nap_mods %>%
 
 kd_obs_pred <- nap_resid %>%
   sample_frac(0.2) %>%
-  ggplot(., aes(kd,pred, color = year(date_unity))) + 
+  ggplot(., aes(kd, pred, color = year(date_unity))) + 
   geom_point(shape = 1) + 
   facet_wrap(~ratio_rmse) + 
   theme_few() + 
@@ -319,8 +319,12 @@ nap_slopes <- nap_mods %>%
 nap_slopes
 ```
 
+[[I'm just tagging a reality check in here that I don't think there is any way
+that the p value can be zero for these, additionally, each lm slope should have
+it's own p value.]]
+
 ## Final Decision
 
 -   Based on the above approaches and logic, the chl-a to biomass multiplier
     does not impact model performance very much. As such, we are going to use
-    the 234 log ratio going forward.
+    the 234\*chl_a^0.57^ log ratio going forward.
