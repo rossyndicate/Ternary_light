@@ -11,6 +11,5 @@ data
 **.DS_Store
 
 ## bookdown artifacts
-src/Ternary-Light-Partitioning_cache/
-src/Ternary-Light-Partitioning_files/
-docs/Ternary-Light-Partitioning_files/
+_bookdown_files
+docs/Ternary-Light-Partitioning_files

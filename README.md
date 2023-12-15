@@ -7,5 +7,5 @@ of the conterminous US.
 To render bookdown, open Ternary_light.Rproj and run the following command in 
 the R console:
 
-bookdown::render_book(input = "src", config_file = "_bookdown.yml")
+bookdown::render_book()
 
