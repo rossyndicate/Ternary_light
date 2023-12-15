@@ -131,10 +131,11 @@ impossible.
 
 neg_tss_dead <- nap_test %>%
   mutate(negative = ifelse(tss_dead < 0, 'negative', 'positive')) %>%
-  group_by(negative,chl_ratio) %>%
+  group_by(negative,chl_ratio, power) %>%
   count() %>%
   pivot_wider(names_from = 'negative',values_from = 'n')  %>%
   mutate(percent_neg = negative/(positive+negative)*100) %>%
+  arrange(chl_ratio^power) %>% 
   kable(caption = "Varying chlorohpyll ratios and summary of negative tss_dead results.")
 
 ```
@@ -170,8 +171,9 @@ tss_dead_chla <- nap_test %>%
   #Remove negatives and very small numbers (ug/L of sediment is basically zero)
   filter(tss_dead > 0.001) %>%
   sample_frac(0.1) %>%
-ggplot(., aes(chl_a,tss_dead,color = type)) +
-  facet_wrap(~chl_ratio) + 
+  mutate(chl_ratio_label = paste0("chlorohpyll a ratio: ", chl_ratio, "*chl-a^", power))  %>% 
+ggplot(., aes(chl_a, tss_dead, color = type)) +
+  facet_wrap(~chl_ratio_label) +
   geom_point() + 
   scale_x_log10() + 
   scale_y_log10() + 
