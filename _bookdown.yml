@@ -5,6 +5,6 @@ language:
     chapter_name: "Part "
 rmd_files:
   - "index.Rmd"
-  - "01_data_prep.Rmd"
-  - "02_data_qaqc.Rmd"
-output_dir: "../docs"
+  - "src/01_data_prep.Rmd"
+  - "src/02_data_qaqc.Rmd"
+output_dir: "docs"
