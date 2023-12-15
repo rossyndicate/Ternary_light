@@ -1,198 +1,240 @@
 ---
-output: html_document
+output: 
+  html_document:
+    fig_caption: true
 editor_options: 
   chunk_output_type: console
+  markdown:
+    wrap: 80
 ---
 
+# (PART) Data downloads and decisions {.unnumbered}
 
-# (PART) Data downloads and decisions {-}
-
-# Download and Join
-
-
-I recognize that I should probably just use `targets` for this part, but...
-I (Matt Ross) don't know how to use targets yet! So, instead we are just
-going to have several code chunks here that just downloads all the data directly
-from figshare, preps data for analysis, etc...
-and the chunks will just be set to `eval = FALSE`, so they won't
-run unless you manually run it. That way this book can run in reasonable timeframes,
-most other chunks will run based on "caching." Though, some data intensive tasks,
-will also simply have `eval = F` to save runtime. These chunks will be flagged
-explicitly, and all their data products saved to a `data/out` folder. 
-
-## AquaSat download
-
-AquaSat is held in a figshare collection with many pieces. For this work we
-will need most of the data held there, which we will access through direct download.
-The URLs are just from the AquaSat collection links.
-
-```{r, eval = F}
-## AquaSat Download data. This takes > 2 hours,
-## so only run if you think 
-## AquaSat has been updated!
-
-## Also
-
-## In-situ raw data with methods
-download.file('https://figshare.com/ndownloader/files/15475154',
-              mode = 'wb',# Needs to be written in binary for some reason 
-              destfile = 'data/in/aq_situ.zip')
-unzip('data/in/aq_situ.zip',exdir = 'data/in/aq_situ')
-
-
-# Site Inventory with type, because it's not in the other inventory
-# Stupid aquasat developer (me/mattross!)
-download.file('https://figshare.com/ndownloader/files/24720434',
-              mode = 'wb',
-              destfile = 'data/in/inv.feather')
-
-
-## Unique site inventory 
-
-download.file('https://figshare.com/ndownloader/files/24720437',
-              mode = 'wb',
-              destfile = 'data/in/unq_site.feather')
-
-## Ecoregion data
-download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l2.zip', destfile = 'data/in/eco2.zip')
-
-unzip('data/in/eco2.zip',exdir = 'data/in/ecoregion')
-
-
-```
-
-## AquaSat Read and join. 
-
-Note, also eval = F to save computation time
-
-```{r, eval = F}
-
-library(tidyverse)
+```{r library-ch1, include=FALSE}
 library(sf)
 library(feather)
 library(GGally)
 library(mapview)
-
-# This is only useful because it has type (lake/stream/etc...)
-inv_type <- read_feather('data/in/inv.feather') %>%
-    select(SiteID = MonitoringLocationIdentifier,
-         type = ResolvedMonitoringLocationTypeName) %>%
-  mutate(type = ifelse(grepl('Lake',type),'Lake',type))
-
-
-#Real inventory
-site.vis <- read_feather('data/in/unq_site.feather') %>%
-  inner_join(inv_type) %>%
-  distinct(SiteID,lat,long,type)
-
-
-
-# Complete in-situ data, 6.5 million records. 
-in.vis <- read_csv('data/in/aq_situ/in-situ/wqp_lagos_unity.csv') 
-
-# Get clouds and path row sites
-
-clouds <- read_feather('data/in/clouds.feather') %>%
-  mutate(date = as.Date(SENSING_TIME)) %>%
-  select(PATH = WRS_PATH, 
-         ROW = WRS_ROW,
-         clouds = CLOUD_COVER,
-         date)
-
-
-site_path_row <- site.vis %>%
-  st_as_sf(.,coords = c('long','lat'), crs = 4326) %>%
-  st_join(.,st_read('data/in/wrs/WRS2_descending.shp')) %>%
-  select(SiteID, PATH, ROW) %>%
-  as_tibble(.) %>%
-  select(-geometry)
+library(ggthemes)
+library(tidyverse)
 
 ```
 
-## Data Eval and Subset
+# Download and Merge Aquasat data
 
+[[I've removed all `eval=F` and `cache=T` so that the .html will open and show
+all figs correctly. My download of files didn't take more than a few minutes, so
+I'm not sure if that's an internet thing? Or maybe because my machine is
+relatively fast? I'm happy to put back in on next round.]]
+
+## AquaSat download
+
+AquaSat is held in a figshare collection with many pieces. For this work we will
+need most of the data held there, which we will access through direct download.
+The URLs are just from the AquaSat collection links.
+
+<details>
+
+<summary>Code to download data.</summary>
+
+```{r download-data}
+# check to see if the data have been downloaded. we assume that if the directory exists, data have been downloaded.
+
+download_dir <- "data/in/"
+
+if(!dir.exists(download_dir)) {
+  # if it doesn't, make the folder and download AquaSat files
+  dir.create(download_dir, recursive = TRUE)
+  ## AquaSat Download data
+  # In-situ raw data with methods
+  download.file('https://figshare.com/ndownloader/files/15475154',
+                mode = 'wb',# Needs to be written in binary for some reason 
+                destfile = file.path(download_dir, 'aq_situ.zip'))
+
+    unzip(file.path(download_dir, 'aq_situ.zip'),
+          exdir = file.path(download_dir, 'aq_situ'))
+  
+  # Site Inventory with type, because it's not in the other inventory
+  # Stupid aquasat developer (me/mattross!)
+  download.file('https://figshare.com/ndownloader/files/24720434',
+                mode = 'wb',
+                destfile = file.path(download_dir, 'inv.feather'))
+  
+  # Unique site inventory 
+    download.file('https://figshare.com/ndownloader/files/24720437',
+                mode = 'wb',
+                destfile = file.path(download_dir, 'unq_site.feather'))
+  
+  ## Ecoregion data
+  download.file('https://gaftp.epa.gov/EPADataCommons/ORD/Ecoregions/cec_na/na_cec_eco_l2.zip', 
+                destfile = file.path(download_dir, 'eco2.zip'))
+    unzip(file.path(download_dir, 'eco2.zip'),
+          exdir = file.path(download_dir, 'ecoregion'))
+
+}
+
+```
+
+</details>
+
+## AquaSat Read and join.
+
+[[note here: 'data/in/clouds.feather' nor WRS2 shapefile
+'data/in/wrs/WRS2_descending.shp' are parts of the downloaded files, commented
+out for rendering purposes]]
+
+<details>
+
+<summary>Code to collate downloaded data.</summary>
+
+```{r read-join-aquasat}
+
+data_out_dir <- "data/out/"
+
+# this chunk only needs to be run if the out directory doesn't exist
+if(!dir.exists(data_out_dir)) {
+  # grab monitoring location identifier (SiteID/MonitorongLocationIdentifier) and
+  # short-hand site type (river/lake/estuary/facilty)
+  inv_type <- read_feather(file.path(download_dir, 'inv.feather')) %>%
+    select(SiteID = MonitoringLocationIdentifier,
+           type = ResolvedMonitoringLocationTypeName) %>%
+    mutate(type = if_else(grepl('Lake',type),'Lake',type)) %>% 
+    #drop 'Facility' types
+    filter(type != 'Facility')
+  
+  # combine with site lat/long from unique site inventory
+  site_vis <- read_feather(file.path(download_dir, 'unq_site.feather')) %>%
+    inner_join(inv_type) %>%
+    distinct(SiteID,lat,long,type)
+  
+  # load complete in-situ data, 6.5 million records. 
+  in_vis <- read_csv(file.path(download_dir, 'aq_situ/in-situ/wqp_lagos_unity.csv')) 
+  
+  # # Get clouds and path row sites
+  # clouds <- read_feather('data/in/clouds.feather') %>%
+  #   mutate(date = as.Date(SENSING_TIME)) %>%
+  #   select(PATH = WRS_PATH, 
+  #          ROW = WRS_ROW,
+  #          clouds = CLOUD_COVER,
+  #          date)
+  # 
+  # site_path_row <- site_vis %>%
+  #   st_as_sf(.,coords = c('long','lat'), crs = 4326) %>%
+  #   st_join(.,st_read('data/in/wrs/WRS2_descending.shp')) %>%
+  #   select(SiteID, PATH, ROW) %>%
+  #   as_tibble(.) %>%
+  #   select(-geometry)
+
+}
+
+```
+
+</details>
+
+## Data Evalualtion and Subset
 
 ### Selecting only simultaneous observations
 
-I think the code mostly speaks for itself here
-```{r, eval = F}
-# Only bother with data that has complete simultaneous observations of
-# chl_a, doc, etc...
+For the purposes of this analysis, we only care about observations that have
+complete simultaneous observations across the four parameters of interest:
+chlorophyll *a*, DOC, TSS, and Secchi disk depth.
 
-simul_vis <- in.vis %>%
-  select(-p_sand) %>%
-  filter(if_all(c(chl_a,doc,tss,secchi), ~!is.na(.))) %>% 
-  inner_join(site.vis) %>%
-  filter(type != 'Facility') %>%
-  #Set some reasonable thresholds, AquaSat is too generous
-  filter(secchi < 15,
-         chl_a < 1000,## ug/L
-         tss < 1000, ## mg/L
-         doc < 50)
+<details>
 
-no_secchi <- in.vis %>%
-  select(-p_sand) %>%
-  filter(across(c(chl_a,doc,tss), ~!is.na(.))) %>% 
-  inner_join(site.vis) %>%
-  filter(type != 'Facility') %>%
-  #Set some reasonable thresholds, AquaSat is too generous
-  filter(
-         chl_a < 1000,## ug/L
-         tss < 1000, ## mg/L
-         doc < 50)
+<summary>Code to subset for simultaneous observations.</summary>
 
-# For speed
-write_feather(simul_vis, 'data/out/simul.feather')
-#For reproducibility
-write_csv(simul_vis, 'data/out/simul.csv')
-
-#For speed
-write_feather(no_secchi, 'data/out/no_secchi.feather')
-
-
+```{r simultaneous}
+if(!dir.exists(data_out_dir)) {
+  #create directory path
+  dir.create(data_out_dir, recursive = TRUE)
+  simul_vis <- in_vis %>%
+    select(-p_sand) %>%
+    filter(if_all(c(chl_a,doc,tss,secchi), ~!is.na(.))) %>% 
+    inner_join(site_vis) %>%
+    #Set some reasonable thresholds, AquaSat is too generous
+    filter(secchi < 15,
+           chl_a < 1000,## ug/L
+           tss < 1000, ## mg/L
+           doc < 50)
+  
+  no_secchi <- in_vis %>%
+    select(-p_sand) %>%
+    filter(if_all(c(chl_a,doc,tss), ~!is.na(.))) %>% 
+    inner_join(site_vis) %>%
+    #Set some reasonable thresholds, AquaSat is too generous
+    filter(
+      chl_a < 1000,## ug/L
+      tss < 1000, ## mg/L
+      doc < 50)
+  
+  # For speed
+  write_feather(simul_vis, file.path(data_out_dir, 'simul.feather'))
+  #For reproducibility
+  write_csv(simul_vis, file.path(data_out_dir, 'simul.csv'))
+  #For speed
+  write_feather(no_secchi, file.path(data_out_dir, 'no_secchi.feather'))
+}
 
 ```
 
+</details>
 
+## Where are sites with simultaneous observations of clarity constituents?
 
-## Where are sites with simultaneous observations of clarity constituents? 
+<details>
 
+<summary>Code to create map figure.</summary>
 
-```{r}
+```{r make-map-simultaneous}
 
-simul_vis <- read_csv('data/out/simul.csv')
+simul_vis <- read_csv(file.path(data_out_dir, 'simul.csv'))
 
 unique_simul <- simul_vis %>%
   distinct(SiteID, lat, long, type) %>%
   st_as_sf(.,coords = c('long','lat'), crs = 4326)
 
 mapviewOptions(fgb = FALSE) # remove flat geobuff which breaks display
-mapview(unique_simul, zcol = 'type')
+simul_map <- mapview(unique_simul, zcol = 'type')
 
 ```
 
+</details>
 
-## What is the general relationiship between variables in log log space
+```{r map-simultaneous, echo=FALSE, fig.cap= "Map of all sites with simultaneous chlorohpyll *a*, DOC, TSS, and Secchi disk depth measurements within the Aquasat data set."}
+#as a note, fig.cap will not work for this chunk, because markdown does not see interactive mapview as a figure.
+simul_map
 
-```{r, cache = T}
+```
 
+## What is the general relationship between variables in log-log space?
 
+<details>
+
+<summary>Code to create scatter plot matrix figure.</summary>
+
+```{r four-vars-scatter}
 log_simul <- simul_vis %>%
-  dplyr::mutate(across(c(secchi,chl_a,tss,doc,tis),log10)) %>%
-  dplyr::filter(across(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
+  mutate(across(c(secchi,chl_a,tss,doc,tis), log10)) %>%
+  filter(if_all(c(chl_a,doc,secchi,tss), ~!is.na(.) & . < Inf & . > -Inf)) 
 
-
-log_simul %>%
+vars_splom <- log_simul %>%
+  # randomly sample 20% of each site type to display info.
   sample_frac(0.2) %>%
   ungroup() %>%
   select(secchi,chl_a,tss,doc,type) %>%
   ggpairs(lower = list(continuous = wrap('points',shape = 1)),
           diag = list(continuous = wrap('densityDiag', alpha = 0.5)),
-         mapping = ggplot2::aes(color = type),
-         columns = c('secchi','chl_a','tss','doc')) +
-  ggthemes::theme_few() + 
+          mapping = ggplot2::aes(color = type),
+          columns = c('secchi','chl_a','tss','doc')) +
+  theme_few() + 
   scale_color_manual(values = c('seagreen3','skyblue3','saddlebrown'))
 
 ```
 
+</details>
 
+```{r splom-fig, echo=F, fig.cap="Scatter plot matrix of four parameters for a random subsample of data weighted by water type."}
+
+vars_splom
+
+```

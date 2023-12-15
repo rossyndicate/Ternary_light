@@ -1,5 +1,5 @@
 ---
-title: "Light partitioning "
+title: "Ternary Light Partitioning"
 author:
   - "Dr. Matthew Ross"
   - 'Dr. Jim Jawitz'
@@ -12,41 +12,84 @@ output:
   #bookdown::pdf_book: default
 editor_options: 
   chunk_output_type: console
+  markdown: 
+    wrap: 80
 ---
 
+# (PART) Motivation and Introduction {.unnumbered}
 
-# (PART) Motivation {-}
+# Introduction 
 
-# Tiny intro
+Water clarity and its components (chlorophyll *a*, total suspended sediment
+(TSS), and dissolved organic carbon (DOC)) are among the most functionally
+important and socially-relevant aspects of water quality. Here we propose a
+method for systematically evaluating the relative contribution of each water
+clarity component to total clarity [[water column light extinction?]], a value
+derived from Secchi disk depth. We further borrow a visualization tool from soil
+analyses, the ternary diagram to describe these contributions: we build ternary
+diagrams that partition light partitioning between DOC mass, derived algal
+biomass, and derived non-algal mass.
 
-Water clarity and its components (chlorophyll a, total suspended sediment, and dissolved organic carbon) are among the most functionally important and socially-relevant aspects of water quality. Here we
-propose a method for systematically evaluating the relative contribution
-of each water clarity component to total clarity. We further borrow a 
-visualization tool from soil analyses, the ternary diagram. We build 
-ternary diagrams that partition light partitioning between DOC, algal cells, and non-algal particles. 
-
+[[add conceptual ternary diagram]]
 
 ## Workflow
 
+[[is it intentional to use particle and mass/biomass interchangeably? Consider a
+high-level consolidation of language below, I changed the above text to be
+mass/biomass.]]
 
-In its simplest form our workflow is:
+In its simplest form our workflow contains the following steps:
 
-1. Download all of [AquaSat](https://figshare.com/collections/AquaSat/4506140) and join disparate AquaSat pieces together
+1.  Download all of [AquaSat](https://figshare.com/collections/AquaSat/4506140),
+    a data set of four water quality parameters collated for the conterminous
+    United States, and join the AquaSat pieces together to create a harmonized
+    data set of the four parameters.
 
-2. Investigate the relationship between chl-a, tis (inorganic sediment),
-non-algal particles (dead particles), and algae biomass to build a
-dataset of algal biomass, non-algal particle mass, and dissolved organic carbon mass. 
+2.  Investigate the relationship between chlorohpyll *a*, TIS (inorganic
+    sediment, derived from TSS), algal biomass (derived from chlorophyll *a*)
+    and non-algal particles (derived from algal biomass and DOC). Create a
+    dataset of algal biomass, non-algal particle mass, and dissolved organic
+    carbon mass.
 
-3. Investigate data quality of AquaSat and select a subset of data
-where chl-a, doc, tss, and secchi were all measured simultaneously
+3.  Investigate data quality of AquaSat and select a subset of data where
+    chlorophyll *a*, DOC, TSS and Secchi and create a dataset where all
+    parameters were all measured simultaneously.
 
+4.  Build a model that predicts light extinction using algal biomass, non-algal
+    particles, and DOC where light extinction (K) is defined as:
 
-4. Build a model that predicts light extinction (1.4/secchi)
-using algal particles, non-algal particles, and doc.
+    $$
+    K = 1.4 / {Sechhi\:Disk\:Depth}
+    $$
 
-5. Use this model to extract light extinction coefficients for 
-each parameter, apply this model to visualizations in ternary space
+    [[note, the value I've seen for the constant is 1.7 (see Poole and Atkins
+    1929), maybe cite here the associated paper for use of 1.4?]]
 
-6. Explore systematic controls on relative contribution to light
-extinction over space and time across CONUS. 
+5.  Use this model to extract light extinction coefficients relative to each
+    parameter (algal biomass, non-algal mass, DOC mass) and apply this model to
+    visualizations in ternary space.
+
+6.  Explore systematic controls on relative contribution to light extinction
+    over space and time across CONUS.
+    
+    
+```{r setup, include=FALSE}
+# this code block checks for the packages used in this workflow, and installs 
+# them if they are not installed on your machine.
+
+package_installer <- function(x) {
+  if (x %in% installed.packages()) {
+    print(paste0('{', x ,'} package is already installed.'))
+  } else {
+    install.packages(x)
+    print(paste0('{', x ,'} package has been installed.'))
+  }
+}
+
+packages = c("tidyverse", "sf", "feather", "GGally", 
+             "mapview", "bookdown", "ggthemes", "ggpmisc",
+             "Metrics", "kableExtra", "broom")
+
+lapply(packages, package_installer)
+```
 
